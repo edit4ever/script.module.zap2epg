@@ -2,7 +2,7 @@
 
 zap2epg will generate an xmltv.xml file for USA/Canada TV lineups.
 
-It is originally designed to be easilty setup in Kodi for use as a grabber for tvheadend. It includes the ability to setup your channel list to reduce the amount of data downloaded and speed up the grab. It has an option for downloading extra detail information for programs. (Note: this option will generate an extra http request per episode) It also has an option to append the extra detail information to the description (plot) field, which makes displaying this information in the Kodi EPG easier on many skins.
+zap2epg is originally designed to be easily setup in Kodi for use as a grabber for tvheadend. It includes the ability to setup your channel list to reduce the amount of data downloaded and speed up the grab. It has an option for downloading extra detail information for programs. (Note: this option will generate an extra http request per episode) It also has an option to append the extra detail information to the description (plot) field, which makes displaying this information in the Kodi EPG easier on many skins.
 
 Setup:
 1. Install the zap2epg addon in Kodi
