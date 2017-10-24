@@ -11,8 +11,16 @@
     <provides>executable</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en_gb">zap2epg generates an xmltv.xml file of EPG data for USA and Canada lineups</summary>
-    <description lang="en_gb">Your add-on's description</description>
+    <summary lang="en_gb">zap2epg will generate an xmltv.xml file for USA/Canada TV lineups</summary>
+    <description lang="en_gb">zap2epg is originally designed to be easily setup in Kodi for use as a grabber for tvheadend.  It includes the ability to setup your channel list to reduce the amount of data downloaded and speed up the grab.  It has an option for downloading extra detail information for programs. (Note: this option will generate an extra http request per episode) It also has an option to append the extra detail information to the description (plot) field, which makes displaying this information in the Kodi EPG easier on many skins.
+
+Setup:
+ 1. Install the zap2epg addon in Kodi
+ 2. Run the addon and setup your lineup
+ 3. Configure your channel list (add channels to be downloaded)
+ 4. You can run the program from the addon as a test (not necessary)
+ 5. Setup the zap2epg grabber in tvheadend
+ 6. Enjoy your new EPG!</description>
     <disclaimer lang="en_gb"></disclaimer>
     <language></language>
     <platform>all</platform>
@@ -22,12 +30,17 @@
     <email></email>
     <source></source>
     <news>
-    v0.1.0 - initial test release (2017-10-31)
+    v0.1.0 - initial test release (2017-10-24)
     </news>
     <assets>
-        <icon></icon>
+        <icon>resources/icon.png</icon>
         <fanart></fanart>
-        <screenshot></screenshot>
+        <screenshot>resources/img/screenshot001.png</screenshot>
+        <screenshot>resources/img/screenshot002.png</screenshot>
+        <screenshot>resources/img/screenshot003.png</screenshot>
+        <screenshot>resources/img/screenshot004.png</screenshot>
+        <screenshot>resources/img/screenshot005.png</screenshot>
+        <screenshot>resources/img/screenshot006.png</screenshot>
     </assets>
   </extension>
 </addon>
