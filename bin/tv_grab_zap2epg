@@ -1,0 +1,57 @@
+#!/bin/bash
+# zap2epg tv schedule grabber for kodi
+################################################################################
+#   This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+################################################################################
+
+. /etc/profile
+
+ADDON_HOME="$HOME/.kodi/userdata/addon_data/script.module.zap2epg"
+ADDON_DIR="$HOME/.kodi/addons/script.module.zap2epg"
+XMLTV_OUTPUT="$ADDON_HOME/xmltv.xml"
+
+if [ $# -lt 1 ]
+then
+  CD=`pwd`
+  cd $ADDON_HOME
+  python $ADDON_DIR/zap2epg.py
+  cat $XMLTV_OUTPUT
+  cd $CD
+  exit 0
+fi
+
+while [ $# -gt 0 ]
+do case "$1" in
+   -d | --description )
+     printf "tv_grab_zap2epg is a simple grabber for USA-Canada\n"
+     ;;
+
+   -v | --version )
+     printf "0.1.x\n"
+     ;;
+
+   -c | --capabilities )
+     printf "baseline\n"
+     ;;
+
+    -* )
+      printf "unknown option: %s\n" "$1"
+      printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
+      exit 2
+      ;;
+
+esac; shift
+done
+
+exit 0

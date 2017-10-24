@@ -1,0 +1,225 @@
+# Kodi Media Center language file
+# Addon Name: zap2epg
+# Addon id: script.module.zap2epg
+# Addon Provider: edit4ever
+"
+msgid ""
+msgstr ""
+
+msgctxt "#32001"
+msgid "Location"
+msgstr ""
+
+msgctxt "#32002"
+msgid "Zipcode"
+msgstr ""
+
+msgctxt "#32003"
+msgid "Lineup"
+msgstr ""
+
+msgctxt "#32004"
+msgid "Lineup Code"
+msgstr ""
+
+msgctxt "#32005"
+msgid "Station List"
+msgstr ""
+
+# 32006-32010 blank
+
+msgctxt "#32011"
+msgid "Options"
+msgstr ""
+
+msgctxt "#32012"
+msgid "Number of Days to Download"
+msgstr ""
+
+msgctxt "#32013"
+msgid "Download Extra Details"
+msgstr ""
+
+msgctxt "#32014"
+msgid "Append Extra Details to Description"
+msgstr ""
+
+# 32015-32199 blank
+
+msgctxt "#32200"
+msgid "X-Details Order"
+msgstr ""
+
+msgctxt "#32201"
+msgid "Extra Details Will Be Appended to Program Description in the Order Set Below"
+msgstr ""
+
+msgctxt "#32202"
+msgid "Seperator"
+msgstr ""
+
+msgctxt "#32210"
+msgid "1"
+msgstr ""
+
+msgctxt "#32211"
+msgid "2"
+msgstr ""
+
+msgctxt "#32212"
+msgid "3"
+msgstr ""
+
+msgctxt "#32213"
+msgid "4"
+msgstr ""
+
+msgctxt "#32214"
+msgid "5"
+msgstr ""
+
+msgctxt "#32215"
+msgid "6"
+msgstr ""
+
+msgctxt "#32216"
+msgid "7"
+msgstr ""
+
+msgctxt "#32217"
+msgid "8"
+msgstr ""
+
+msgctxt "#32218"
+msgid "9"
+msgstr ""
+
+msgctxt "#32219"
+msgid "10"
+msgstr ""
+
+msgctxt "#32220"
+msgid "11"
+msgstr ""
+
+msgctxt "#32221"
+msgid "12"
+msgstr ""
+
+msgctxt "#32222"
+msgid "13"
+msgstr ""
+
+msgctxt "#32223"
+msgid "14"
+msgstr ""
+
+msgctxt "#32224"
+msgid "15"
+msgstr ""
+
+msgctxt "#32225"
+msgid "16"
+msgstr ""
+
+msgctxt "#32226"
+msgid "17"
+msgstr ""
+
+msgctxt "#32227"
+msgid "18"
+msgstr ""
+
+msgctxt "#32228"
+msgid "19"
+msgstr ""
+
+msgctxt "#32229"
+msgid "20"
+msgstr ""
+
+# 32230-32299 blank
+
+msgctxt "#32300"
+msgid "None"
+msgstr ""
+
+msgctxt "#32301"
+msgid "BULLET"
+msgstr ""
+
+msgctxt "#32302"
+msgid "HYPHEN"
+msgstr ""
+
+msgctxt "#32303"
+msgid "Plot Description"
+msgstr ""
+
+msgctxt "#32304"
+msgid "New/Live Indicator"
+msgstr ""
+
+msgctxt "#32305"
+msgid "HD Indicator"
+msgstr ""
+
+msgctxt "#32306"
+msgid "CC Indicator"
+msgstr ""
+
+msgctxt "#32307"
+msgid "Season/Episode Number"
+msgstr ""
+
+msgctxt "#32308"
+msgid "TV Rating"
+msgstr ""
+
+msgctxt "#32309"
+msgid "Original Air Date"
+msgstr ""
+
+msgctxt "#32310"
+msgid "Program Title"
+msgstr ""
+
+msgctxt "#32311"
+msgid "Episode Title"
+msgstr ""
+
+msgctxt "#32312"
+msgid "Episode Title in Quotes"
+msgstr ""
+
+msgctxt "#32313"
+msgid "Cast"
+msgstr ""
+
+msgctxt "#32314"
+msgid "Movie Release Year"
+msgstr ""
+
+msgctxt "#32320"
+msgid "LINE BREAK"
+msgstr ""
+
+msgctxt "#32321"
+msgid "SPACE"
+msgstr ""
+
+msgctxt "#32322"
+msgid "COLON"
+msgstr ""
+
+msgctxt "#32323"
+msgid "VERTICAL BAR"
+msgstr ""
+
+msgctxt "#32324"
+msgid "SLASH"
+msgstr ""
+
+msgctxt "#32325"
+msgid "COMMA"
+msgstr ""
