@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
   <category label="32001">
-    <setting label="32002"  type="text"  id="zipcode"  default=""/>
-    <setting label="32003"  type="text"  id="lineup"  default=""/>
-    <setting label="32004"  type="text"  id="lineupcode"  default=""/>
-    <setting label="32005"  type="text"  id="slist"  default="" option="hidden"/>
+    <setting label="32002" type="text" id="zipcode" default=""/>
+    <setting label="32003" type="text" id="lineup" default=""/>
+    <setting label="32004" type="text" id="lineupcode" default=""/>
+    <setting label="32005" type="text" id="slist" default=""/>
   </category>
   <category label="32011">
-    <setting label="32012"  type="slider"  id="days"  default="1" range="1,1,14" option="int"/>
-    <setting label="32013"  type="bool"  id="xdetails"  default="false"/>
-    <setting label="32014"  type="bool"  id="xdesc"  default="false"/>
+    <setting label="32012" type="slider" id="days" default="1" range="1,1,14" option="int"/>
+    <setting label="32013" type="bool" id="xdetails" default="false"/>
+    <setting label="32014" type="bool" id="xdesc" default="true"/>
+    <setting label="32020" type="enum" id="epicon" default="1" lvalues="32021|32022|32023"/>
   </category>
   <category label="32200">
     <setting label="32201" type="lsep" />

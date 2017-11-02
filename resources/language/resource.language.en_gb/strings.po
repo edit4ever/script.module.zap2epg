@@ -44,7 +44,25 @@ msgctxt "#32014"
 msgid "Append Extra Details to Description"
 msgstr ""
 
-# 32015-32199 blank
+# 32015-32019 blank
+
+msgctxt "#32020"
+msgid "Include Episode Thumbnail"
+msgstr ""
+
+msgctxt "#32021"
+msgid "None"
+msgstr ""
+
+msgctxt "#32022"
+msgid "Series Image"
+msgstr ""
+
+msgctxt "#32023"
+msgid "Episode Image"
+msgstr ""
+
+# 32016-32199 blank
 
 msgctxt "#32200"
 msgid "X-Details Order"

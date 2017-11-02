@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.1.0" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="0.2.1" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
-    <import addon="script.module.beautifulsoup4" version="4.3.2" />
     <import addon="script.module.dateutil" version="2.4.2"/>
     <import addon="script.module.xbmcswift2" version="2.4.0"/>
     <import addon="script.module.requests" version="2.9.1" />
@@ -30,6 +29,8 @@ Setup:
     <email></email>
     <source></source>
     <news>
+    v0.2.1 - fix for location name and JSON file errors (2017-11-02)
+    v0.2.0 - modified for new zap2it guide data (2017-10-27)
     v0.1.0 - initial test release (2017-10-24)
     </news>
     <assets>

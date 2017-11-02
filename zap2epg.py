@@ -18,6 +18,7 @@ import urllib2
 import codecs
 import time
 import datetime
+import calendar
 import gzip
 import os
 import logging
@@ -26,61 +27,50 @@ import json
 import sys
 from os.path import dirname
 import xml.etree.ElementTree as ET
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    kodiPath = dirname(dirname(dirname(os.getcwd())))
-    bs4Path = os.path.join(kodiPath, 'addons/script.module.beautifulsoup4/lib')
-    sys.path.append(bs4Path)
-    from bs4 import BeautifulSoup
 
-stationList = []
+
 def mainRun(userdata):
-    global stationList
-    try:
-        settingsFile = os.path.join(userdata, 'settings.xml')
-        settings = ET.parse(settingsFile)
-        root = settings.getroot()
-        settingsDict = {}
-        xdescOrderDict = {}
-        for setting in root.findall('setting'):
-            settingStr = setting.get('value')
-            settingID = setting.get('id')
-            settingsDict[settingID] = settingStr
-        for setting in settingsDict:
-            if setting == 'slist':
-                stationList = settingsDict[setting].split(",")
-            if setting == 'zipcode':
-                zipcode = settingsDict[setting]
-            if setting == 'lineup':
-                lineup = settingsDict[setting]
-            if setting == 'lineupcode':
-                lineupcode = settingsDict[setting]
-            if setting == 'days':
-                days = settingsDict[setting]
-            if setting == 'xdetails':
-                xdetails = settingsDict[setting]
-            if setting == 'xdesc':
-                xdesc = settingsDict[setting]
-            if setting.startswith('desc'):
-                xdescOrderDict[setting] = (settingsDict[setting])
-        xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
-        if zipcode == '' or lineupcode == '':
-            logging.warn('No lineup configured - quitting zap2epg')
-            print 'No lineup configured - please setup zap2epg location in Kodi'
-            sys.exit(1)
-    except Exception as e:
-        logging.exception('Exception: Main settings - no lineup configured')
-        print 'No lineup configured - please setup zap2epg location in Kodi'
-        sys.exit(1)
+    settingsFile = os.path.join(userdata, 'settings.xml')
+    settings = ET.parse(settingsFile)
+    root = settings.getroot()
+    settingsDict = {}
+    xdescOrderDict = {}
+    for setting in root.findall('setting'):
+        settingStr = setting.get('value')
+        settingID = setting.get('id')
+        settingsDict[settingID] = settingStr
+    for setting in settingsDict:
+        if setting == 'slist':
+            stationList = settingsDict[setting]
+        if setting == 'zipcode':
+            zipcode = settingsDict[setting]
+        if setting == 'lineup':
+            lineup = settingsDict[setting]
+        if setting == 'lineupcode':
+            lineupcode = settingsDict[setting]
+        if setting == 'days':
+            days = settingsDict[setting]
+        if setting == 'xdetails':
+            xdetails = settingsDict[setting]
+        if setting == 'xdesc':
+            xdesc = settingsDict[setting]
+        if setting == 'epicon':
+            epicon = settingsDict[setting]
+        if setting.startswith('desc'):
+            xdescOrderDict[setting] = (settingsDict[setting])
+    xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
+    if zipcode.isdigit():
+        country = 'USA'
+    else:
+        country = 'CAN'
     logging.info('Running zap2epg for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
-    dayHours = int(days) * 8 # set to 8 when finished
-    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))*1000
+    dayHours = int(days) * 8 # set back to 8 when done testing
+    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
 
-    def deleteOldCache(gridtimeStart):
+    def deleteOldCache(gridtime):
         logging.info('Checking for old cache files...')
         try:
             if os.path.exists(cacheDir):
@@ -89,48 +79,27 @@ def mainRun(userdata):
                     oldfile = entry.split('.')[0]
                     if oldfile.isdigit():
                         fn = os.path.join(cacheDir, entry)
-                        if (int(oldfile) + 10800000) < gridtimeStart:
+                        if (int(oldfile) + 10800) < gridtime:
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
                             except OSError, e:
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
-                    elif not oldfile.isdigit():
-                        episodeSet = {j for i in schedule.values() for j in i}
-                        episodeList = list(episodeSet)
-                        fn = os.path.join(cacheDir, entry)
-                        if oldfile not in episodeList:
-                            try:
-                                os.remove(fn)
-                                logging.info('Deleting old cache: %s', entry)
-                            except OSError, e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                    # elif not oldfile.isdigit():
+                    #     episodeSet = {j for i in schedule.values() for j in i}
+                    #     episodeList = list(episodeSet)
+                    #     fn = os.path.join(cacheDir, entry)
+                    #     if oldfile not in episodeList:
+                    #         try:
+                    #             os.remove(fn)
+                    #             logging.info('Deleting old cache: %s', entry)
+                    #         except OSError, e:
+                    #             logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache')
 
-    def tget(episode, tag):
-        text = episode.find(True,{'class':tag})
-        if text is not None:
-            success = text.get_text()
-            success = re.sub('&','&amp;', success)
-            return success
-        else:
-            return None
-
-    def iget(episode, tag, match):
-        icons = episode.find_all(True,{'class':tag})
-        for icon in icons:
-            if icon is not None:
-                result = icon.get_text().strip()
-                result = re.sub('\n','', result)
-                result = re.sub(' +',' ', result)
-                if match in result:
-                    return result
-        else:
-            return None
-
     def convTime(t):
-        return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)/1000))
+        return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))
 
     def savepage(fn, data):
         if not os.path.exists(cacheDir):
@@ -139,6 +108,38 @@ def mainRun(userdata):
         with gzip.open(fileDir,"wb+") as f:
             f.write(data)
             f.close()
+
+    def genreSort(EPfilter, EPgenre):
+        genreList = []
+        for f in EPfilter:
+            fClean = re.sub('filter-','',f)
+            genreList.append(fClean)
+        for g in EPgenre:
+            genreList.append(g)
+        if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
+            genreList.insert(0, "Movie / Drama")
+        if 'News' in genreList:
+            genreList.insert(0, "News / Current affairs")
+        if 'Game show' in genreList:
+            genreList.insert(0, "Show / Games")
+        if 'Art' in genreList or 'Culture' in genreList:
+            genreList.insert(0, "Arts / Culture (without music)")
+        if 'Politics' in genreList or 'Social' in genreList:
+            genreList.insert(0, "Social / Political issues / Economics")
+        if 'Education' in genreList:
+            genreList.insert(0, "Education / Science / Factual topics")
+        if 'How-to' in genreList:
+            genreList.insert(0, "Leisure hobbies")
+        if 'Sitcom' in genreList:
+            genreList.insert(0, "Show / Game show")
+        if 'Talk' in genreList:
+            genreList.insert(0, "Show / Game show")
+        if 'Children' in genreList:
+            genreList.insert(0, "Children's / Youth programs")
+        if 'Music' in genreList:
+            genreList.insert(0, "Music / Ballet / Dance")
+        return genreList
+
 
     def printHeader(fh, enc):
         logging.info('Creating xmltv.xml file...')
@@ -190,50 +191,66 @@ def mainRun(userdata):
                             startTime = convTime(edict['epstart'])
                             is_dst = time.daylight and time.localtime().tm_isdst > 0
                             TZoffset = "%.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
-                            stopTime = convTime(int(edict['epstart']) + (int(edict['eplength'])*60000))
+                            stopTime = convTime(edict['epend'])
                             fh.write('\t<programme start=\"' + startTime + ' ' + TZoffset + '\" stop=\"' + stopTime + ' ' + TZoffset + '\" channel=\"' + station + '.zap2epg' + '\">\n')
-                            fh.write('\t\t<episode-num system=\"dd_progid\">' + episode + '</episode-num>\n')
+                            fh.write('\t\t<episode-num system=\"dd_progid\">' + edict['epid'] + '</episode-num>\n')
                             if edict['epshow'] is not None:
-                                fh.write('\t\t<title lang=\"' + lang + '\">' + edict['epshow'] + '</title>\n')
+                                fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
                             if edict['eptitle'] is not None:
-                                fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + edict['eptitle'] + '</sub-title>\n')
-                            if xdesc is True:
+                                fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
+                            if xdesc == 'true':
                                 xdescSort = addXDetails(edict)
-                                fh.write('\t\t<desc lang=\"' + lang + '\">' + xdescSort + '</desc>\n')
-                            if xdesc is False:
-                                if edict['epdesc'] is not None and edict['epxdesc'] is None:
-                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + edict['epdesc'] + '</desc>\n')
-                                if edict['epxdesc'] is not None:
-                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + edict['epxdesc'] + '</desc>\n')
-                            if edict['epsn'] is not None or edict['epen'] is not None:
-                                fh.write("\t\t<episode-num system=\"onscreen\">" + edict['epsn'] + edict['epen'] + "</episode-num>\n")
+                                fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
+                            if xdesc == 'false':
+                                if edict['epdesc'] is not None:
+                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
+                            if edict['epsn'] is not None and edict['epen'] is not None:
+                                fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
+                                fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
                             if edict['epyear'] is not None:
                                 fh.write('\t\t<date>' + edict['epyear'] + '</date>\n')
-                            if edict['epnew'] is None and edict['eplive'] is None:
+                            if edict['epthumb'] is not None or edict['epimage'] is not None:
+                                if not episode.startswith("MV"):
+                                    if epicon == '1':
+                                        fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epimage'] + '.jpg" />\n')
+                                    if epicon == '2':
+                                        fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                                else:
+                                    fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                            if not any(i in ['New', 'Live'] for i in edict['epflag']):
                                 fh.write("\t\t<previously-shown ")
-                                if edict['epoad'] is not None:
-                                    fh.write("start=\"" + edict['epoad'] + " " + TZoffset + "\"")
+                                if edict['epoad'] is not None and int(edict['epoad']) > 0:
+                                    fh.write("start=\"" + convTime(edict['epoad']) + " " + TZoffset + "\"")
                                 fh.write(" />\n")
-                            if edict['epnew'] is not None:
-                                fh.write("\t\t<new />\n")
-                            if edict['eplive'] is not None:
-                                fh.write("\t\t<live />\n")
-                            if edict['epcc'] is not None:
-                                fh.write("\t\t<subtitles type=\"teletext\" />\n")
+                            if edict['epflag'] is not None:
+                                if 'New' in edict['epflag']:
+                                    fh.write("\t\t<new />\n")
+                                if 'Live' in edict['epflag']:
+                                    fh.write("\t\t<live />\n")
                             if edict['eprating'] is not None:
                                 fh.write('\t\t<rating>\n\t\t\t<value>' + edict['eprating'] + '</value>\n\t\t</rating>\n')
                             if edict['epstar'] is not None:
                                 fh.write('\t\t<star-rating>\n\t\t\t<value>' + edict['epstar'] + '/4</value>\n\t\t</star-rating>\n')
-                            if edict['epgenres'] is not None:
-                                for genre in edict['epgenres']:
+                            if edict['epfilter'] is not None and edict['epgenres'] is not None:
+                                genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
+                                for genre in genreNewList:
                                     fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                                #         filterClean = re.sub('filter-','',f).capitalize()
+                                #         fh.write("\t\t<category lang=\"" + lang + "\">" + filterClean + "</category>\n")
+                            # if edict['epfilter'] is not None and edict['epfilter'] is not []:
+                            #     for f in edict['epfilter']:
+                            #         filterClean = re.sub('filter-','',f).capitalize()
+                            #         fh.write("\t\t<category lang=\"" + lang + "\">" + filterClean + "</category>\n")
+                            # if edict['epgenres'] is not None and edict['epgenres'] is not []:
+                            #     for genre in edict['epgenres']:
+                            #         fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
                             fh.write("\t</programme>\n")
                             episodeCount += 1
-                    except:
-                        logging.warn('No data for episode %s:', episode)
-                        fn = os.path.join(cacheDir, episode + '.json')
-                        os.remove(fn)
-                        logging.info('Deleting episode %s:', episode)
+                    except Exception as e:
+                        logging.exception('No data for episode %s:', episode)
+                        #fn = os.path.join(cacheDir, episode + '.json')
+                        #os.remove(fn)
+                        #logging.info('Deleting episode %s:', episode)
         except Exception as e:
             logging.exception('Exception: printEpisodes')
 
@@ -247,67 +264,90 @@ def mainRun(userdata):
             printEpisodes(fh)
             printFooter(fh)
             fh.close()
-
         except Exception as e:
             logging.exception('Exception: xmltv')
 
     def parseStations(content):
-        global stationList
         try:
-            soup = BeautifulSoup(content, "html.parser")
-            ch_guide = soup.find_all('table', {'class':'zc-row'})
-            if stationList == ['']:
-                logging.info('Channels not configured - adding all channels in lineup...')
-#                stationListTemp = []
-                for station in ch_guide:
-                    skey = station.get('id')
-                    schedule[skey] = {}
-                    schedule[skey]['chnum'] = station.find('span', {'class':'zc-st-n'}).get_text('a')
-                    schedule[skey]['chfcc'] = station.find('span', {'class':'zc-st-c'}).get_text('a')
-                    stationList.append(skey)
-#                stationList = ','.join(stationListTemp)
-            else:
-                for station in ch_guide:
-                    skey = station.get('id')
+            ch_guide = json.loads(content)
+            for station in ch_guide['channels']:
+                skey = station.get('channelId')
+                if stationList != '':
                     if skey in stationList:
                         schedule[skey] = {}
-                        schedule[skey]['chnum'] = station.find('span', {'class':'zc-st-n'}).get_text('a')
-                        schedule[skey]['chfcc'] = station.find('span', {'class':'zc-st-c'}).get_text('a')
+                        schedule[skey]['chnum'] = station.get('channelNo')
+                        schedule[skey]['chfcc'] = station.get('callSign')
+                else:
+                    schedule[skey] = {}
+                    schedule[skey]['chnum'] = station.get('channelNo')
+                    schedule[skey]['chfcc'] = station.get('callSign')
         except Exception as e:
-            logging.exception("Exception: parseStations")
+            logging.exception('Exception: parseStations')
 
     def parseEpisodes(content):
         try:
-            soup = BeautifulSoup(content, "html.parser")
-            ch_guide = soup.find_all('table', {'class':'zc-row'})
-            for station in ch_guide:
-                skey = station.get('id')
-                if skey in stationList:
-                    episodes = station.find_all('td', {'class':'zc-pg'})
+            ch_guide = json.loads(content)
+            for station in ch_guide['channels']:
+                skey = station.get('channelId')
+                if stationList != '':
+                    if skey in stationList:
+                        episodes = station.get('events')
+                        for episode in episodes:
+                            #epkeyStart = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                            epkey = episode['program'].get('tmsId')
+                            schedule[skey][epkey] = {}
+                            schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
+                            schedule[skey][epkey]['epstart'] = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                            schedule[skey][epkey]['epend'] = str(calendar.timegm(time.strptime(episode.get('endTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                            schedule[skey][epkey]['eplength'] = episode.get('duration')
+                            schedule[skey][epkey]['epshow'] = episode['program'].get('title')
+                            schedule[skey][epkey]['eptitle'] = episode['program'].get('episodeTitle')
+                            schedule[skey][epkey]['epdesc'] = episode['program'].get('shortDesc')
+                            schedule[skey][epkey]['epyear'] = episode['program'].get('releaseYear')
+                            schedule[skey][epkey]['eprating'] = episode.get('rating')
+                            schedule[skey][epkey]['epflag'] = episode.get('flag')
+                            schedule[skey][epkey]['eptags'] = episode.get('tags')
+                            schedule[skey][epkey]['epsn'] = episode['program'].get('season')
+                            schedule[skey][epkey]['epen'] = episode['program'].get('episode')
+                            schedule[skey][epkey]['epthumb'] = episode.get('thumbnail')
+                            schedule[skey][epkey]['epoad'] = None
+                            schedule[skey][epkey]['epstar'] = None
+                            schedule[skey][epkey]['epfilter'] = episode.get('filter')
+                            schedule[skey][epkey]['epgenres'] = None
+                            schedule[skey][epkey]['epcredits'] = None
+                            schedule[skey][epkey]['epxdesc'] = None
+                            schedule[skey][epkey]['epseries'] = episode.get('seriesId')
+                            schedule[skey][epkey]['epimage'] = None
+                            schedule[skey][epkey]['epfan'] = None
+                else:
+                    episodes = station.get('events')
                     for episode in episodes:
-                        epbase = episode.get('onclick')
-                        epkey = epbase.split(',')[1].replace("'", "")
+                        #epkeyStart = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                        epkey = episode['program'].get('tmsId')
                         schedule[skey][epkey] = {}
-                        schedule[skey][epkey]['epstart'] = epbase.split(',')[2].replace("'", "")
-                        schedule[skey][epkey]['eplength'] = epbase.split(',')[3].replace(")", "")
-                        schedule[skey][epkey]['epshow'] = tget(episode, 'zc-pg-t')
-                        schedule[skey][epkey]['eptitle'] = tget(episode, 'zc-pg-e')
-                        schedule[skey][epkey]['epdesc'] = tget(episode, 'zc-pg-d')
-                        schedule[skey][epkey]['epyear'] = tget(episode, 'zc-pg-y')
-                        schedule[skey][epkey]['eprating'] = iget(episode, 'zc-ic-tvratings', 'TV')
-                        schedule[skey][epkey]['eplive'] = iget(episode, 'zc-ic-live', 'LIVE')
-                        schedule[skey][epkey]['epcc'] = iget(episode, 'zc-ic-cc', 'CC')
-                        schedule[skey][epkey]['epnew'] = iget(episode, 'zc-ic-ne', 'NEW')
-                        schedule[skey][epkey]['epprem'] = iget(episode, 'zc-ic-premiere', 'PREMIERE')
-                        schedule[skey][epkey]['epfin'] = iget(episode, 'zc-ic-finale', 'FINALE')
-                        schedule[skey][epkey]['ephd'] = iget(episode, 'zc-ic', 'HD')
-                        schedule[skey][epkey]['epxdesc'] = None
-                        schedule[skey][epkey]['epsn'] = None
-                        schedule[skey][epkey]['epen'] = None
+                        schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
+                        schedule[skey][epkey]['epstart'] = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                        schedule[skey][epkey]['epend'] = str(calendar.timegm(time.strptime(episode.get('endTime'), '%Y-%m-%dT%H:%M:%SZ')))
+                        schedule[skey][epkey]['eplength'] = episode.get('duration')
+                        schedule[skey][epkey]['epshow'] = episode['program'].get('title')
+                        schedule[skey][epkey]['eptitle'] = episode['program'].get('episodeTitle')
+                        schedule[skey][epkey]['epdesc'] = episode['program'].get('shortDesc')
+                        schedule[skey][epkey]['epyear'] = episode['program'].get('releaseYear')
+                        schedule[skey][epkey]['eprating'] = episode.get('rating')
+                        schedule[skey][epkey]['epflag'] = episode.get('flag')
+                        schedule[skey][epkey]['eptags'] = episode.get('tags')
+                        schedule[skey][epkey]['epsn'] = episode['program'].get('season')
+                        schedule[skey][epkey]['epen'] = episode['program'].get('episode')
+                        schedule[skey][epkey]['epthumb'] = episode.get('thumbnail')
                         schedule[skey][epkey]['epoad'] = None
                         schedule[skey][epkey]['epstar'] = None
+                        schedule[skey][epkey]['epfilter'] = episode.get('filter')
                         schedule[skey][epkey]['epgenres'] = None
                         schedule[skey][epkey]['epcredits'] = None
+                        schedule[skey][epkey]['epxdesc'] = None
+                        schedule[skey][epkey]['epseries'] = episode.get('seriesId')
+                        schedule[skey][epkey]['epimage'] = None
+                        schedule[skey][epkey]['epfan'] = None
         except Exception as e:
             logging.exception('Exception: parseEpisodes')
 
@@ -316,62 +356,71 @@ def mainRun(userdata):
             for station in schedule:
                 sdict = schedule[station]
                 for episode in sdict:
-                    try:
                         if not episode.startswith("ch"):
                             edict = sdict[episode]
-                            filename = episode + '.json'
+                            EPseries = edict['epseries']
+                            filename = EPseries + '.json'
                             fileDir = os.path.join(cacheDir, filename)
-                            if not os.path.exists(fileDir):
-                                retry = 3
-                                while retry > 0:
-                                    logging.info('Downloading details data for: %s', episode)
-                                    url = 'http://tvlistings.zap2it.com/tvlistings/gridDetailService?pgmId=' + episode
-                                    try:
-                                        contentLoad = urllib2.urlopen(url)
-                                        content = contentLoad.read().decode('iso-8859-1')
-                                        JSONcontent = re.sub(r'.* = ', '', content)
-                                        if len(JSONcontent) > 100:
-                                            with open(fileDir,"wb+") as f:
-                                                f.write(JSONcontent)
-                                                f.close()
-                                            retry = 0
-                                        else:
+                            try:
+                                if not os.path.exists(fileDir):
+                                    retry = 3
+                                    while retry > 0:
+                                        logging.info('Downloading details data for: %s', EPseries)
+                                        url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
+                                        data = 'programSeriesID=' + EPseries
+                                        try:
+                                            URLcontent = urllib2.Request(url, data=data)
+                                            JSONcontent = urllib2.urlopen(URLcontent).read()
+                                            if JSONcontent:
+                                                with open(fileDir,"wb+") as f:
+                                                    f.write(JSONcontent)
+                                                    f.close()
+                                                retry = 0
+                                            else:
+                                                time.sleep(1)
+                                                retry -= 1
+                                                logging.warn('Retry downloading missing details data for: %s', EPseries)
+                                        except urllib2.URLError, e:
                                             time.sleep(1)
                                             retry -= 1
-                                            logging.warn('Retry downloading missing details data for: %s', episode)
-                                    except urllib2.URLError, e:
-                                        time.sleep(1)
-                                        retry -= 1
-                                        logging.warn('Retry downloading details data for: %s - %s', episode, e)
-                            if os.path.exists(fileDir):
-                                fileSize = os.path.getsize(fileDir)
-                                if fileSize > 0:
-                                    with open(fileDir, 'rb') as f:
-                                        EPdetails = json.loads(f.read())
-                                        f.close()
-                                    if 'program' in EPdetails:
+                                            logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
+                                if os.path.exists(fileDir):
+                                    fileSize = os.path.getsize(fileDir)
+                                    if fileSize > 0:
+                                        with open(fileDir, 'rb') as f:
+                                            EPdetails = json.loads(f.read())
+                                            f.close()
                                         logging.info('Parsing %s', filename)
-                                        Xprog = EPdetails['program']
-                                        edict['epoad'] = Xprog.get('originalAirDate')
-                                        edict['epsn'] = Xprog.get('seasonNumber')
-                                        edict['epen'] = Xprog.get('episodeNumber')
-                                        edict['epxdesc'] = Xprog.get('description')
-                                        edict['epstar'] = Xprog.get('starRating')
-                                        edict['epgenres'] = Xprog.get('genres')
-                                        edict['epcredits'] = Xprog.get('credits')
+                                        edict['epimage'] = EPdetails.get('seriesImage')
+                                        edict['epfan'] = EPdetails.get('backgroundImage')
+                                        EPgenres = EPdetails.get('seriesGenres')
+                                        edict['epgenres'] = EPgenres.split('|')
+                                        if episode.startswith("MV"):
+                                            edict['epcredits'] = EPdetails['overviewTab'].get('cast')
+                                        #edict['epstar'] = EPdetails.get('starRating')
+                                        EPlist = EPdetails['upcomingEpisodeTab']
+                                        EPid = edict['epid']
+                                        for airing in EPlist:
+                                            if EPid.lower() == airing['tmsID'].lower():
+                                                if not episode.startswith("MV"):
+                                                    try:
+                                                        origDate = airing.get('originalAirDate')
+                                                        if origDate != '':
+                                                            EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
+                                                            edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
+                                                    except Exception as e:
+                                                        logging.exception('Could not parse oad for: %s - %s', episode, e)
+
                                     else:
                                         logging.warn('Could not parse data for: %s - deleting file', filename)
                                         os.remove(fileDir)
                                 else:
-                                    logging.warn('Could not parse data for: %s - deleting file', filename)
-                                    os.remove(fileDir)
-                            else:
-                                logging.warn('Could not download details data for: %s - skipping episode', episode)
-                    except:
-                        logging.warn('Could not parse data for: %s - deleting file', filename)
-                        os.remove(fileDir)
+                                    logging.warn('Could not download details data for: %s - skipping episode', episode)
+                            except Exception as e:
+                                logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
+                                #os.remove(fileDir)
         except Exception as e:
-            logging.exception('Exception: parseXdetails %s', filename)
+            logging.exception('Exception: parseXdetails')
 
     def addXDetails(edict):
         try:
@@ -449,8 +498,10 @@ def mainRun(userdata):
                         lastOption = int(opt)
                 return sortOrderList
 
-            if edict['epoad'] is not None:
-                origDate = int(edict['epoad'])/1000
+            if edict['epoad'] is not None and int(edict['epoad']) > 0:
+                is_dst = time.daylight and time.localtime().tm_isdst > 0
+                TZoffset = (time.altzone if is_dst else time.timezone)
+                origDate = int(edict['epoad']) + TZoffset
                 finalDate = datetime.datetime.fromtimestamp(origDate).strftime('%B %d%% %Y')
                 finalDate = re.sub('%', ',', finalDate)
                 date = "First aired: " + finalDate + space
@@ -458,18 +509,22 @@ def mainRun(userdata):
                 myear = "Released: " + edict['epyear'] + space
             if edict['eprating'] is not None:
                 ratings = edict['eprating'] + space
-            if edict['epnew'] is not None:
-                new = edict['epnew'] + space
-            if edict['eplive'] is not None:
-                new = edict['eplive'] + space
-            if edict['epprem'] is not None:
-                new = edict['epprem'] + space
-            if edict['epfin'] is not None:
-                new = edict['epfin'] + space
-            if edict['epcc'] is not None:
-                cc = edict['epcc'] + space
-            if edict['ephd'] is not None:
-                hd = edict['ephd'] + space
+            if edict['epflag'] != []:
+                flagList = edict['epflag']
+                new = ' '.join(flagList).upper() + space
+            #if edict['epnew'] is not None:
+                #new = edict['epnew'] + space
+            #if edict['eplive'] is not None:
+                #new = edict['eplive'] + space
+            #if edict['epprem'] is not None:
+                #new = edict['epprem'] + space
+            #if edict['epfin'] is not None:
+                #new = edict['epfin'] + space
+            if edict['eptags'] != []:
+                tagsList = edict['eptags']
+                cc = ' '.join(tagsList).upper() + space
+            #if edict['ephd'] is not None:
+                #hd = edict['ephd'] + space
             if edict['epsn'] is not None and edict['epen'] is not None:
                 s = re.sub('S', '', edict['epsn'])
                 sf = "Season " + str(int(s))
@@ -480,7 +535,10 @@ def mainRun(userdata):
                 cast = "Cast: "
                 castlist = ""
                 prev = None
-                for g in edict['epcredits']:
+                EPcastList = []
+                for c in edict['epcredits']:
+                    EPcastList.append(c['name'])
+                for g in EPcastList:
                     if prev is None:
                         castlist = g
                         prev = g
@@ -492,10 +550,8 @@ def mainRun(userdata):
             if edict['eptitle'] is not None:
                 epis = edict['eptitle'] + space
                 episqts = '\"' + edict['eptitle'] + '\"' + space
-            if edict['epdesc'] is not None and edict['epxdesc'] is None:
+            if edict['epdesc'] is not None:
                 plot = edict['epdesc'] + space
-            if edict['epxdesc'] is not None:
-                plot = edict['epxdesc'] + space
 
         # todo - handle star ratings
 
@@ -510,28 +566,33 @@ def mainRun(userdata):
             os.mkdir(cacheDir)
         count = 0
         gridtime = gridtimeStart
+        if stationList == '':
+            logging.info('No channel list found - adding all stations!')
         while count < dayHours:
-            params = "&lineupId=" + lineupcode + "&zipcode=" + zipcode
-            filename = str(gridtime) + '.html.gz'
+            filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
             if not os.path.exists(fileDir):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = 'http://tvlistings.zap2it.com/tvlistings/ZCGrid.do?isDescriptionOn=true&fromTimeInMillis=' + str(gridtime) + params + '&aid=tvschedule'
+                    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
                     saveContent = urllib2.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
             if os.path.exists(fileDir):
-                with gzip.open(fileDir, 'rb') as f:
-                    content = f.read()
-                    f.close()
-                logging.info('Parsing %s', filename)
-                if count == 0:
-                    parseStations(content)
-                parseEpisodes(content)
+                try:
+                    with gzip.open(fileDir, 'rb') as f:
+                        content = f.read()
+                        f.close()
+                    logging.info('Parsing %s', filename)
+                    if count == 0:
+                        parseStations(content)
+                    parseEpisodes(content)
+                except:
+                    logging.warn('JSON file error for: %s - deleting file', filename)
+                    os.remove(fileDir)
             count += 1
-            gridtime = gridtime + 10800000
+            gridtime = gridtime + 10800
         if xdetails == 'true':
             parseXdetails()
         xmltv()
@@ -539,19 +600,12 @@ def mainRun(userdata):
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
-        print (str(stationCount), ' Stations and ', str(episodeCount), 'Episodes written to xmltv.xml file.')
         return timeRun, stationCount, episodeCount
     except Exception as e:
         logging.exception('Exception: main')
 
 if __name__ == '__main__':
-    currentDir = os.getcwd()
-    if os.name == 'nt':
-        pattern = '^(.*?)Kodi'
-    else:
-        pattern = '^(.*?)kodi'
-    splitDir = re.match(pattern, currentDir).group(0)
-    userdata = os.path.join(splitDir, 'userdata', 'addon_data', 'script.module.zap2epg')
+    userdata = os.getcwd()
     log = os.path.join(userdata, 'zap2epg.log')
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     mainRun(userdata)

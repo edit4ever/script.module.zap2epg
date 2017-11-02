@@ -1,0 +1,5 @@
+/cache
+*.pyo
+*.log
+xmltv.xml
+*.json

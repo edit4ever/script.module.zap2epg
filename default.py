@@ -20,21 +20,14 @@ from xbmcswift2 import Plugin
 import StringIO
 import os
 import re
-import requests
 import sys
 import logging
 import zap2epg
 import urllib2
 import json
 from collections import OrderedDict
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    kodiPath = xbmc.translatePath('special//:home')
-    bs4Path = os.path.join(kodiPath, 'addons/script.module.beautifulsoup4/lib')
-    sys.path.append(bs4Path)
-    from bs4 import BeautifulSoup
-
+import time
+import datetime
 
 userdata = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 if not os.path.exists(userdata):
@@ -43,25 +36,25 @@ log = os.path.join(userdata, 'zap2epg.log')
 Clist = os.path.join(userdata, 'channels.json')
 plugin = Plugin()
 dialog = xbmcgui.Dialog()
+gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
 
 def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
-def create_cList(params):
-    url = 'http://tvlistings.zap2it.com/tvlistings/ZCGrid.do?isDescriptionOn=true' + params + '&aid=tvschedule'
+def create_cList():
+    lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
+    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=USA&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()
+    contentDict = json.loads(content)
     stationDict = {}
-    soup = BeautifulSoup(content, "html.parser")
-    stationsFind = soup.find_all('table', {'class':'zc-row'})
-    for station in stationsFind:
-        skey = station.get('id')
-        stationDict[skey] = {}
-        stationNumber = station.find('span', {'class':'zc-st-n'}).get_text('a')
-        stationName = station.find('span', {'class':'zc-st-c'}).get_text('a')
-        stationDict[skey]['name'] = stationName
-        stationDict[skey]['num'] = stationNumber
-        stationDict[skey]['include'] = 'False'
+    if 'channels' in contentDict:
+        for channel in contentDict['channels']:
+            skey = channel.get('channelId')
+            stationDict[skey] = {}
+            stationDict[skey]['name'] = channel.get('callSign')
+            stationDict[skey]['num'] = channel.get('channelNo')
+            stationDict[skey]['include'] = 'False'
     stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
     with open(Clist,"w") as f:
         json.dump(stationDictSort,f)
@@ -69,19 +62,15 @@ def create_cList(params):
 @plugin.route('/channels')
 def channels():
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    params = ""
-    if lineup is not None and zipcode is not None:
-        params += "&lineupId=" + lineupcode
-        params += "&zipcode=" + zipcode
-    else:
+    if lineup is None or zipcode is None:
         dialog.ok('Location not configured!', '', 'Please setup your location before configuring channels.')
     if not os.path.isfile(Clist):
-        create_cList(params)
+        create_cList()
     else:
         newList = dialog.yesno('Existing Channel List Found', 'Would you like to download a new channel list or review your current list?', '', 'Select Yes to download new list.')
         if newList:
             os.remove(Clist)
-            create_cList(params)
+            create_cList()
     with open(Clist) as data:
         stationDict = json.load(data)
     stationDict = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
@@ -115,30 +104,39 @@ def location():
     zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
     if not zipcodeNew:
         return
+    zipcodeNew =re.sub(' ', '', zipcodeNew)
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
-    url = 'http://tvlistings.zap2it.com/tvlistings/ZBChooseProvider.do?method=getProviders&zipcode=' + zipcodeNew
+    if zipcodeNew.isdigit():
+        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew
+    else:
+        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew
     content = urllib2.urlopen(url).read()
-    soup = BeautifulSoup(content, "html.parser")
-    lineupsN = []
-    lineupsU = []
-    lineupsDiv = soup.find_all('div', {'id':'zc-provider'})
-    for lineupTag in lineupsDiv:
-        lineupsGet = lineupTag.find_all('a')
-        for lineup in lineupsGet:
-            lineupName = lineup.text.strip()
-            lineupsN.append(lineupName)
-            lineupURL = lineup.get('href')
-            lineupCode = lineupURL.rsplit('&', 1)[1].split('=',1)[1]
-            lineupsU.append(lineupCode)
-    lineupSel = dialog.select('Select a lineup', list=lineupsN)
-    if not lineupSel:
+    lineupDict = json.loads(content)
+    lineupsN = ['AVAILABLE LINEUPS']
+    lineupsC = ['NONE']
+    if 'Providers' in lineupDict:
+        for provider in lineupDict['Providers']:
+            lineupName = provider.get('name')
+            lineupLocation = provider.get('location')
+            if lineupLocation != '':
+                lineupCombo = lineupName + '  (' + lineupLocation + ')'
+                lineupsN.append(lineupCombo)
+            else:
+                lineupsN.append(lineupName)
+            lineupsC.append(provider.get('headendId'))
+    else:
+        dialog.ok('Error - No Providers!', 'No providers were found - please check zipcode and try again.')
         return
-    lineupSelCode = lineupsU[lineupSel]
-    lineupSelName = lineupsN[lineupSel]
-    lineupSelNameSafe = re.sub(' ','-', str(lineupSelName))
-    xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelNameSafe)
-    xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
-    xbmc.executebuiltin('Container.Refresh')
+    lineupSel = dialog.select('Select a lineup', list=lineupsN)
+    if lineupSel:
+        lineupSelCode = lineupsC[lineupSel]
+        lineupSelName = lineupsN[lineupSel]
+        xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
+        xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelName)
+        xbmc.executebuiltin('Container.Refresh')
+    else:
+        xbmc.executebuiltin('Container.Refresh')
+        return
 
 @plugin.route('/run')
 def run():
