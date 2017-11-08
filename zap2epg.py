@@ -606,6 +606,8 @@ def mainRun(userdata):
             gridtime = gridtime + 10800
         if xdetails == 'true':
             showList = parseXdetails()
+        else:
+            showList = []
         xmltv()
         deleteOldCache(gridtimeStart, showList)
         timeRun = round((time.time() - pythonStartTime),2)
