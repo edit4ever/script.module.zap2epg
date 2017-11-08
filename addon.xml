@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.2.1" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="0.3.0" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -11,7 +11,7 @@
   </extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_gb">zap2epg will generate an xmltv.xml file for USA/Canada TV lineups</summary>
-    <description lang="en_gb">zap2epg is originally designed to be easily setup in Kodi for use as a grabber for tvheadend.  It includes the ability to setup your custom channel list to reduce the amount of data downloaded and speed up the grab.  It has an option for downloading extra detail information for programs. (Note: this option will generate an extra http request per episode) It also has an option to append the extra detail information to the description (plot) field, which makes displaying this information in the Kodi EPG easier on many skins.
+    <description lang="en_gb">zap2epg is originally designed to be easily setup in Kodi for use as a grabber for tvheadend.  It includes the ability to setup your custom channel list to reduce the amount of data downloaded and speed up the grab.  It has an option for downloading extra detail information for programs. (Note: this option will generate an extra http request per series) It also has an option to append the extra detail information to the description (plot) field, which makes displaying this information in the Kodi EPG easier on many skins.
 
 Setup:
  1. Install the zap2epg addon in Kodi
@@ -29,6 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
+    v0.3.0 - adds generic timezone lineups and station/channels icons | removes old episode data from cache (2017-11-07)
     v0.2.1 - fix for location name and JSON file errors (2017-11-02)
     v0.2.0 - modified for new zap2it guide data (2017-10-27)
     v0.1.0 - initial test release (2017-10-24)

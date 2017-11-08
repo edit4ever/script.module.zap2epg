@@ -27,6 +27,7 @@ import json
 import sys
 from os.path import dirname
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
 
 
 def mainRun(userdata):
@@ -70,7 +71,7 @@ def mainRun(userdata):
     gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
 
-    def deleteOldCache(gridtime):
+    def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
         try:
             if os.path.exists(cacheDir):
@@ -79,22 +80,20 @@ def mainRun(userdata):
                     oldfile = entry.split('.')[0]
                     if oldfile.isdigit():
                         fn = os.path.join(cacheDir, entry)
-                        if (int(oldfile) + 10800) < gridtime:
+                        if (int(oldfile) + 10800) < gridtimeStart:
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
                             except OSError, e:
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
-                    # elif not oldfile.isdigit():
-                    #     episodeSet = {j for i in schedule.values() for j in i}
-                    #     episodeList = list(episodeSet)
-                    #     fn = os.path.join(cacheDir, entry)
-                    #     if oldfile not in episodeList:
-                    #         try:
-                    #             os.remove(fn)
-                    #             logging.info('Deleting old cache: %s', entry)
-                    #         except OSError, e:
-                    #             logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                    elif not oldfile.isdigit():
+                        fn = os.path.join(cacheDir, entry)
+                        if oldfile not in showList:
+                            try:
+                                os.remove(fn)
+                                logging.info('Deleting old cache: %s', entry)
+                            except OSError, e:
+                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache')
 
@@ -155,20 +154,26 @@ def mainRun(userdata):
         stationCount = 0
         try:
             logging.info('Writing Stations to xmltv.xml file...')
-            for station in schedule:
+            try:
+                scheduleSort = OrderedDict(sorted(schedule.iteritems(), key=lambda x: int(x[1]['chnum'])))
+            except:
+                scheduleSort = OrderedDict(sorted(schedule.iteritems(), key=lambda x: x[1]['chfcc']))
+            for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
-                if 'chnum' in schedule[station] and 'chfcc' in schedule[station]:
-                    xchnum = schedule[station]['chnum']
-                    xchfcc = schedule[station]['chfcc']
-                    fh.write('\t\t<display-name>' + xchnum + ' ' + xchfcc + '</display-name>\n')
+                if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
+                    xchnum = scheduleSort[station]['chnum']
+                    xchfcc = scheduleSort[station]['chfcc']
                     fh.write('\t\t<display-name>' + xchfcc + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
-                elif 'chfcc' in schedule[station]:
-                    xchnum = schedule[station]['chfcc']
+                    fh.write('\t\t<display-name>' + xchnum + ' ' + xchfcc + '</display-name>\n')
+                elif 'chfcc' in scheduleSort[station]:
+                    xchnum = scheduleSort[station]['chfcc']
                     fh.write('\t\t<display-name>' + xcfcc + '</display-name>\n')
-                elif 'chnum' in schedule[station]:
-                    xchnum = schedule[station]['chnum']
+                elif 'chnum' in scheduleSort[station]:
+                    xchnum = scheduleSort[station]['chnum']
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
+                if 'chicon' in scheduleSort[station]:
+                    fh.write("\t\t<icon src=\"http:" + scheduleSort[station]['chicon'] + "\" />\n")
                 fh.write("\t</channel>\n")
                 stationCount += 1
         except Exception as e:
@@ -209,14 +214,17 @@ def mainRun(userdata):
                                 fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
                             if edict['epyear'] is not None:
                                 fh.write('\t\t<date>' + edict['epyear'] + '</date>\n')
-                            if edict['epthumb'] is not None or edict['epimage'] is not None:
-                                if not episode.startswith("MV"):
-                                    if epicon == '1':
+                            if not episode.startswith("MV"):
+                                if epicon == '1':
+                                    if edict['epimage'] is not None:
                                         fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epimage'] + '.jpg" />\n')
-                                    if epicon == '2':
+                                    else:
                                         fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
-                                else:
-                                    fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                                if epicon == '2':
+                                    if edict['epthumb'] is not None:
+                                        fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                            if episode.startswith("MV"):
+                                fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
                             if not any(i in ['New', 'Live'] for i in edict['epflag']):
                                 fh.write("\t\t<previously-shown ")
                                 if edict['epoad'] is not None and int(edict['epoad']) > 0:
@@ -277,10 +285,12 @@ def mainRun(userdata):
                         schedule[skey] = {}
                         schedule[skey]['chnum'] = station.get('channelNo')
                         schedule[skey]['chfcc'] = station.get('callSign')
+                        schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
                 else:
                     schedule[skey] = {}
                     schedule[skey]['chnum'] = station.get('channelNo')
                     schedule[skey]['chfcc'] = station.get('callSign')
+                    schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
         except Exception as e:
             logging.exception('Exception: parseStations')
 
@@ -293,7 +303,6 @@ def mainRun(userdata):
                     if skey in stationList:
                         episodes = station.get('events')
                         for episode in episodes:
-                            #epkeyStart = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
                             epkey = episode['program'].get('tmsId')
                             schedule[skey][epkey] = {}
                             schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
@@ -322,7 +331,6 @@ def mainRun(userdata):
                 else:
                     episodes = station.get('events')
                     for episode in episodes:
-                        #epkeyStart = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
                         epkey = episode['program'].get('tmsId')
                         schedule[skey][epkey] = {}
                         schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
@@ -352,6 +360,7 @@ def mainRun(userdata):
             logging.exception('Exception: parseEpisodes')
 
     def parseXdetails():
+        showList = []
         try:
             for station in schedule:
                 sdict = schedule[station]
@@ -359,6 +368,7 @@ def mainRun(userdata):
                         if not episode.startswith("ch"):
                             edict = sdict[episode]
                             EPseries = edict['epseries']
+                            showList.append(edict['epseries'])
                             filename = EPseries + '.json'
                             fileDir = os.path.join(cacheDir, filename)
                             try:
@@ -421,6 +431,7 @@ def mainRun(userdata):
                                 #os.remove(fileDir)
         except Exception as e:
             logging.exception('Exception: parseXdetails')
+        return showList
 
     def addXDetails(edict):
         try:
@@ -594,9 +605,9 @@ def mainRun(userdata):
             count += 1
             gridtime = gridtime + 10800
         if xdetails == 'true':
-            parseXdetails()
+            showList = parseXdetails()
         xmltv()
-        deleteOldCache(gridtimeStart)
+        deleteOldCache(gridtimeStart, showList)
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))

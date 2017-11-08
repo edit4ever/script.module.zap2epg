@@ -34,6 +34,7 @@ if not os.path.exists(userdata):
         os.mkdir(userdata)
 log = os.path.join(userdata, 'zap2epg.log')
 Clist = os.path.join(userdata, 'channels.json')
+cacheDir = os.path.join(userdata, 'cache')
 plugin = Plugin()
 dialog = xbmcgui.Dialog()
 gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
@@ -101,19 +102,23 @@ def channels():
 
 @plugin.route('/location')
 def location():
+    country = ['USA', 'CAN']
+    countryNew = dialog.select('Select your country', list=country)
     zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
     if not zipcodeNew:
         return
     zipcodeNew =re.sub(' ', '', zipcodeNew)
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
-    if zipcodeNew.isdigit():
+    if countryNew == 0:
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew
-    else:
+        lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
+        lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
+    if countryNew == 1:
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew
+        lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
+        lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
     content = urllib2.urlopen(url).read()
     lineupDict = json.loads(content)
-    lineupsN = ['AVAILABLE LINEUPS']
-    lineupsC = ['NONE']
     if 'Providers' in lineupDict:
         for provider in lineupDict['Providers']:
             lineupName = provider.get('name')
@@ -133,6 +138,16 @@ def location():
         lineupSelName = lineupsN[lineupSel]
         xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
         xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelName)
+        if os.path.exists(cacheDir):
+            entries = os.listdir(cacheDir)
+            for entry in entries:
+                oldfile = entry.split('.')[0]
+                if oldfile.isdigit():
+                    fn = os.path.join(cacheDir, entry)
+                    try:
+                        os.remove(fn)
+                    except:
+                        pass
         xbmc.executebuiltin('Container.Refresh')
     else:
         xbmc.executebuiltin('Container.Refresh')
