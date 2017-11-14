@@ -203,6 +203,8 @@ def mainRun(userdata):
                                 fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
                             if edict['eptitle'] is not None:
                                 fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
+                            else:
+                                fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + '</sub-title>\n')
                             if xdesc == 'true':
                                 xdescSort = addXDetails(edict)
                                 fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
@@ -216,15 +218,17 @@ def mainRun(userdata):
                                 fh.write('\t\t<date>' + edict['epyear'] + '</date>\n')
                             if not episode.startswith("MV"):
                                 if epicon == '1':
-                                    if edict['epimage'] is not None:
+                                    if edict['epimage'] is not None and edict['epimage'] != '':
                                         fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epimage'] + '.jpg" />\n')
                                     else:
-                                        fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                                        if edict['epthumb'] is not None and edict['epthumb'] != '':
+                                            fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
                                 if epicon == '2':
-                                    if edict['epthumb'] is not None:
+                                    if edict['epthumb'] is not None and edict['epthumb'] != '':
                                         fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
                             if episode.startswith("MV"):
-                                fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                                if edict['epthumb'] is not None and edict['epthumb'] != '':
+                                    fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
                             if not any(i in ['New', 'Live'] for i in edict['epflag']):
                                 fh.write("\t\t<previously-shown ")
                                 if edict['epoad'] is not None and int(edict['epoad']) > 0:
@@ -243,15 +247,6 @@ def mainRun(userdata):
                                 genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
                                 for genre in genreNewList:
                                     fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
-                                #         filterClean = re.sub('filter-','',f).capitalize()
-                                #         fh.write("\t\t<category lang=\"" + lang + "\">" + filterClean + "</category>\n")
-                            # if edict['epfilter'] is not None and edict['epfilter'] is not []:
-                            #     for f in edict['epfilter']:
-                            #         filterClean = re.sub('filter-','',f).capitalize()
-                            #         fh.write("\t\t<category lang=\"" + lang + "\">" + filterClean + "</category>\n")
-                            # if edict['epgenres'] is not None and edict['epgenres'] is not []:
-                            #     for genre in edict['epgenres']:
-                            #         fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
                             fh.write("\t</programme>\n")
                             episodeCount += 1
                     except Exception as e:
