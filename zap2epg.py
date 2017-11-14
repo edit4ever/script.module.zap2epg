@@ -57,6 +57,8 @@ def mainRun(userdata):
             xdesc = settingsDict[setting]
         if setting == 'epicon':
             epicon = settingsDict[setting]
+        if setting == 'epgenre':
+            epgenre = settingsDict[setting]
         if setting.startswith('desc'):
             xdescOrderDict[setting] = (settingsDict[setting])
     xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
@@ -111,33 +113,71 @@ def mainRun(userdata):
 
     def genreSort(EPfilter, EPgenre):
         genreList = []
-        for f in EPfilter:
-            fClean = re.sub('filter-','',f)
-            genreList.append(fClean)
-        for g in EPgenre:
-            genreList.append(g)
-        if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
-            genreList.insert(0, "Movie / Drama")
-        if 'News' in genreList:
-            genreList.insert(0, "News / Current affairs")
-        if 'Game show' in genreList:
-            genreList.insert(0, "Show / Games")
-        if 'Art' in genreList or 'Culture' in genreList:
-            genreList.insert(0, "Arts / Culture (without music)")
-        if 'Politics' in genreList or 'Social' in genreList:
-            genreList.insert(0, "Social / Political issues / Economics")
-        if 'Education' in genreList:
-            genreList.insert(0, "Education / Science / Factual topics")
-        if 'How-to' in genreList:
-            genreList.insert(0, "Leisure hobbies")
-        if 'Sitcom' in genreList:
-            genreList.insert(0, "Show / Game show")
-        if 'Talk' in genreList:
-            genreList.insert(0, "Show / Game show")
-        if 'Children' in genreList:
-            genreList.insert(0, "Children's / Youth programs")
-        if 'Music' in genreList:
-            genreList.insert(0, "Music / Ballet / Dance")
+        if epgenre == '2':
+            for f in EPfilter:
+                fClean = re.sub('filter-','',f)
+                genreList.append(fClean)
+            for g in EPgenre:
+                if g != "Comedy":
+                    genreList.append(g)
+            if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
+                genreList.insert(0, "Movie / Drama")
+            if 'News' in genreList:
+                genreList.insert(0, "News / Current affairs")
+            if 'Game show' in genreList:
+                genreList.insert(0, "Game show / Quiz / Contest")
+            if 'Law' in genreList:
+                genreList.insert(0, "Show / Game show")
+            if 'Art' in genreList or 'Culture' in genreList:
+                genreList.insert(0, "Arts / Culture (without music)")
+            if 'Entertainment' in genreList:
+                genreList.insert(0, "Popular culture / Traditional Arts")
+            if 'Politics' in genreList or 'Social' in genreList or 'Public affairs' in genreList:
+                genreList.insert(0, "Social / Political issues / Economics")
+            if 'Education' in genreList or 'Science' in genreList:
+                genreList.insert(0, "Education / Science / Factual topics")
+            if 'How-to' in genreList:
+                genreList.insert(0, "Leisure hobbies")
+            if 'Travel' in genreList:
+                genreList.insert(0, "Tourism / Travel")
+            if 'Sitcom' in genreList:
+                genreList.insert(0, "Variety show")
+            if 'Talk' in genreList:
+                genreList.insert(0, "Talk show")
+            if 'Children' in genreList:
+                genreList.insert(0, "Children's / Youth programs")
+            if 'Animated' in genreList:
+                genreList.insert(0, "Cartoons / Puppets")
+            if 'Music' in genreList:
+                genreList.insert(0, "Music / Ballet / Dance")
+        if epgenre == '1':
+            for f in EPfilter:
+                fClean = re.sub('filter-','',f)
+                genreList.append(fClean)
+            for g in EPgenre:
+                genreList.append(g)
+            if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
+                genreList = ["Movie / Drama"]
+            elif 'News' in genreList:
+                genreList = ["News / Current affairs"]
+            elif 'News magazine' in genreList:
+                genreList = ["News magazine"]
+            elif 'Public affairs' in genreList:
+                genreList = ["News / Current affairs"]
+            elif 'Interview' in genreList:
+                genreList = ["Discussion / Interview / Debate"]
+            elif 'Game show' in genreList:
+                genreList = ["Game show / Quiz / Contest"]
+            elif 'Talk' in genreList:
+                genreList = ["Talk show"]
+            elif 'Sports' in genreList:
+                genreList = ["Sports"]
+            elif 'Sitcom' in genreList:
+                genreList = ["Variety show"]
+            elif 'Children' in genreList:
+                genreList = ["Children's / Youth programs"]
+            else:
+                genreList = ["Variety show"]
         return genreList
 
 
@@ -242,10 +282,11 @@ def mainRun(userdata):
                                 fh.write('\t\t<rating>\n\t\t\t<value>' + edict['eprating'] + '</value>\n\t\t</rating>\n')
                             if edict['epstar'] is not None:
                                 fh.write('\t\t<star-rating>\n\t\t\t<value>' + edict['epstar'] + '/4</value>\n\t\t</star-rating>\n')
-                            if edict['epfilter'] is not None and edict['epgenres'] is not None:
-                                genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
-                                for genre in genreNewList:
-                                    fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                            if epgenre != '0':
+                                if edict['epfilter'] is not None and edict['epgenres'] is not None:
+                                    genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
+                                    for genre in genreNewList:
+                                        fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
                             fh.write("\t</programme>\n")
                             episodeCount += 1
                     except Exception as e:
@@ -608,15 +649,15 @@ def mainRun(userdata):
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
 ####### remove this block after testing
-        dictFileName = 'schedule.json'
-        DictFileDir = os.path.join(userdata, dictFileName)
-        with open(DictFileDir, 'w') as fp:
-            json.dump(schedule, fp)
-        dictFileNameTxt = 'schedule.txt'
-        DictFileTxtDir = os.path.join(userdata, dictFileNameTxt)
-        f = open(DictFileTxtDir,"w")
-        f.write( str(schedule) )
-        f.close()
+        # dictFileName = 'schedule.json'
+        # DictFileDir = os.path.join(userdata, dictFileName)
+        # with open(DictFileDir, 'w') as fp:
+        #     json.dump(schedule, fp)
+        # dictFileNameTxt = 'schedule.txt'
+        # DictFileTxtDir = os.path.join(userdata, dictFileNameTxt)
+        # f = open(DictFileTxtDir,"w")
+        # f.write( str(schedule) )
+        # f.close()
 ####### remove this block after testing
         return timeRun, stationCount, episodeCount
     except Exception as e:
