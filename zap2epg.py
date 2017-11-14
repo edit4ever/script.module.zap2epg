@@ -71,6 +71,7 @@ def mainRun(userdata):
     gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
 
+
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
         try:
@@ -203,8 +204,6 @@ def mainRun(userdata):
                                 fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
                             if edict['eptitle'] is not None:
                                 fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
-                            else:
-                                fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + '</sub-title>\n')
                             if xdesc == 'true':
                                 xdescSort = addXDetails(edict)
                                 fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
@@ -298,7 +297,7 @@ def mainRun(userdata):
                     if skey in stationList:
                         episodes = station.get('events')
                         for episode in episodes:
-                            epkey = episode['program'].get('tmsId')
+                            epkey = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
                             schedule[skey][epkey] = {}
                             schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
                             schedule[skey][epkey]['epstart'] = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
@@ -326,7 +325,7 @@ def mainRun(userdata):
                 else:
                     episodes = station.get('events')
                     for episode in episodes:
-                        epkey = episode['program'].get('tmsId')
+                        epkey = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
                         schedule[skey][epkey] = {}
                         schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
                         schedule[skey][epkey]['epstart'] = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
@@ -360,70 +359,70 @@ def mainRun(userdata):
             for station in schedule:
                 sdict = schedule[station]
                 for episode in sdict:
-                        if not episode.startswith("ch"):
-                            edict = sdict[episode]
-                            EPseries = edict['epseries']
-                            showList.append(edict['epseries'])
-                            filename = EPseries + '.json'
-                            fileDir = os.path.join(cacheDir, filename)
-                            try:
-                                if not os.path.exists(fileDir):
-                                    retry = 3
-                                    while retry > 0:
-                                        logging.info('Downloading details data for: %s', EPseries)
-                                        url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
-                                        data = 'programSeriesID=' + EPseries
-                                        try:
-                                            URLcontent = urllib2.Request(url, data=data)
-                                            JSONcontent = urllib2.urlopen(URLcontent).read()
-                                            if JSONcontent:
-                                                with open(fileDir,"wb+") as f:
-                                                    f.write(JSONcontent)
-                                                    f.close()
-                                                retry = 0
-                                            else:
-                                                time.sleep(1)
-                                                retry -= 1
-                                                logging.warn('Retry downloading missing details data for: %s', EPseries)
-                                        except urllib2.URLError, e:
+                    if not episode.startswith("ch"):
+                        edict = sdict[episode]
+                        EPseries = edict['epseries']
+                        showList.append(edict['epseries'])
+                        filename = EPseries + '.json'
+                        fileDir = os.path.join(cacheDir, filename)
+                        try:
+                            if not os.path.exists(fileDir):
+                                retry = 3
+                                while retry > 0:
+                                    logging.info('Downloading details data for: %s', EPseries)
+                                    url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
+                                    data = 'programSeriesID=' + EPseries
+                                    try:
+                                        URLcontent = urllib2.Request(url, data=data)
+                                        JSONcontent = urllib2.urlopen(URLcontent).read()
+                                        if JSONcontent:
+                                            with open(fileDir,"wb+") as f:
+                                                f.write(JSONcontent)
+                                                f.close()
+                                            retry = 0
+                                        else:
                                             time.sleep(1)
                                             retry -= 1
-                                            logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
-                                if os.path.exists(fileDir):
-                                    fileSize = os.path.getsize(fileDir)
-                                    if fileSize > 0:
-                                        with open(fileDir, 'rb') as f:
-                                            EPdetails = json.loads(f.read())
-                                            f.close()
-                                        logging.info('Parsing %s', filename)
-                                        edict['epimage'] = EPdetails.get('seriesImage')
-                                        edict['epfan'] = EPdetails.get('backgroundImage')
-                                        EPgenres = EPdetails.get('seriesGenres')
-                                        edict['epgenres'] = EPgenres.split('|')
-                                        if episode.startswith("MV"):
-                                            edict['epcredits'] = EPdetails['overviewTab'].get('cast')
-                                        #edict['epstar'] = EPdetails.get('starRating')
-                                        EPlist = EPdetails['upcomingEpisodeTab']
-                                        EPid = edict['epid']
-                                        for airing in EPlist:
-                                            if EPid.lower() == airing['tmsID'].lower():
-                                                if not episode.startswith("MV"):
-                                                    try:
-                                                        origDate = airing.get('originalAirDate')
-                                                        if origDate != '':
-                                                            EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
-                                                            edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
-                                                    except Exception as e:
-                                                        logging.exception('Could not parse oad for: %s - %s', episode, e)
+                                            logging.warn('Retry downloading missing details data for: %s', EPseries)
+                                    except urllib2.URLError, e:
+                                        time.sleep(1)
+                                        retry -= 1
+                                        logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
+                            if os.path.exists(fileDir):
+                                fileSize = os.path.getsize(fileDir)
+                                if fileSize > 0:
+                                    with open(fileDir, 'rb') as f:
+                                        EPdetails = json.loads(f.read())
+                                        f.close()
+                                    logging.info('Parsing %s', filename)
+                                    edict['epimage'] = EPdetails.get('seriesImage')
+                                    edict['epfan'] = EPdetails.get('backgroundImage')
+                                    EPgenres = EPdetails.get('seriesGenres')
+                                    edict['epgenres'] = EPgenres.split('|')
+                                    if episode.startswith("MV"):
+                                        edict['epcredits'] = EPdetails['overviewTab'].get('cast')
+                                    #edict['epstar'] = EPdetails.get('starRating')
+                                    EPlist = EPdetails['upcomingEpisodeTab']
+                                    EPid = edict['epid']
+                                    for airing in EPlist:
+                                        if EPid.lower() == airing['tmsID'].lower():
+                                            if not episode.startswith("MV"):
+                                                try:
+                                                    origDate = airing.get('originalAirDate')
+                                                    if origDate != '':
+                                                        EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
+                                                        edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
+                                                except Exception as e:
+                                                    logging.exception('Could not parse oad for: %s - %s', episode, e)
 
-                                    else:
-                                        logging.warn('Could not parse data for: %s - deleting file', filename)
-                                        os.remove(fileDir)
                                 else:
-                                    logging.warn('Could not download details data for: %s - skipping episode', episode)
-                            except Exception as e:
-                                logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
-                                #os.remove(fileDir)
+                                    logging.warn('Could not parse data for: %s - deleting file', filename)
+                                    os.remove(fileDir)
+                            else:
+                                logging.warn('Could not download details data for: %s - skipping episode', episode)
+                        except Exception as e:
+                            logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
+                            #os.remove(fileDir)
         except Exception as e:
             logging.exception('Exception: parseXdetails')
         return showList
@@ -608,6 +607,17 @@ def mainRun(userdata):
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
+####### remove this block after testing
+        dictFileName = 'schedule.json'
+        DictFileDir = os.path.join(userdata, dictFileName)
+        with open(DictFileDir, 'w') as fp:
+            json.dump(schedule, fp)
+        dictFileNameTxt = 'schedule.txt'
+        DictFileTxtDir = os.path.join(userdata, dictFileNameTxt)
+        f = open(DictFileTxtDir,"w")
+        f.write( str(schedule) )
+        f.close()
+####### remove this block after testing
         return timeRun, stationCount, episodeCount
     except Exception as e:
         logging.exception('Exception: main')
