@@ -18,6 +18,7 @@ import urllib2
 import codecs
 import time
 import datetime
+import _strptime
 import calendar
 import gzip
 import os

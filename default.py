@@ -28,6 +28,7 @@ import json
 from collections import OrderedDict
 import time
 import datetime
+import _strptime
 import requests
 
 userdata = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
