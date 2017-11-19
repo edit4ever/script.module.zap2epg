@@ -80,7 +80,37 @@ msgctxt "#32033"
 msgid "Full"
 msgstr ""
 
-# 32034-32199 blank
+# 32034-32039 blank
+
+msgctxt "#32040"
+msgid "Tvheadend"
+msgstr ""
+
+msgctxt "#32041"
+msgid "Tvheadend Username"
+msgstr ""
+
+msgctxt "#32042"
+msgid "Tvheadend Password"
+msgstr ""
+
+msgctxt "#32043"
+msgid "Append Subchannel Number for OTA"
+msgstr ""
+
+msgctxt "#32044"
+msgid "Append Tvheadend Service Name"
+msgstr ""
+
+msgctxt "#32045"
+msgid "Tvheadend URL"
+msgstr ""
+
+msgctxt "#32046"
+msgid "Tvheadend Port"
+msgstr ""
+
+# 32047-32199 blank
 
 msgctxt "#32200"
 msgid "X-Details Order"

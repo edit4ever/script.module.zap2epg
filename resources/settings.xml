@@ -30,6 +30,14 @@
     <setting label="32228" type="enum" id="desc19" default="0" lvalues="32300|32301|32320|32302|32321|32322|32323|32324|32325|32303|32304|32305|32306|32307|32308|32309|32310|32311|32312|32313|32314"/>
     <setting label="32229" type="enum" id="desc20" default="0" lvalues="32300|32301|32320|32302|32321|32322|32323|32324|32325|32303|32304|32305|32306|32307|32308|32309|32310|32311|32312|32313|32314"/>
   </category>
+  <category label="32040">
+    <setting label="32045" type="ipaddress" id="tvhurl" default="127.0.0.1"/>
+    <setting label="32046" type="number" id="tvhport" default="9981"/>
+    <setting label="32041" type="text" id="usern" default=""/>
+    <setting label="32042" type="text" id="passw" default=""/>
+    <setting label="32043" type="bool" id="chmatch" default="true"/>
+    <setting label="32044" type="bool" id="tvhmatch" default="true"/>
+  </category>
   <category label="32001">
     <setting label="32002" type="text" id="zipcode" default=""/>
     <setting label="32003" type="text" id="lineup" default=""/>

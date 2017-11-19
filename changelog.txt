@@ -1,0 +1,23 @@
+v0.5.0 (2017-11-19)
+ - add tvheadend subchannel and match option
+
+v0.4.1 (2017-11-16)
+ - adds option to adjust genre information
+
+v0.3.5 (2017-11-14)
+ - fixes missing episodes
+
+v0.3.2 (2017-11-12)
+ - fixes url change for location
+
+v0.3.0 (2017-11-07)
+ - adds generic timezone lineups and station/channels icons | removes old episode data from cache
+
+v0.2.1 (2017-11-02)
+ - fix for location name and JSON file errors
+
+v0.2.0 (2017-10-27)
+ - modified for new zap2it guide data
+
+v0.1.0 (2017-10-24)
+ - initial test release

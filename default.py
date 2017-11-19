@@ -28,6 +28,7 @@ import json
 from collections import OrderedDict
 import time
 import datetime
+import requests
 
 userdata = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 if not os.path.exists(userdata):
@@ -39,13 +40,50 @@ plugin = Plugin()
 dialog = xbmcgui.Dialog()
 gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
 
+try:
+    tvh_url_get = xbmcaddon.Addon('pvr.hts').getSetting("host")
+    if tvh_url_get:
+        tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value=tvh_url_get)
+    else:
+        try:
+            tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+        except:
+            tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value="127.0.0.1")
+    tvh_port_get = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
+    if tvh_port_get:
+        tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value=tvh_port_get)
+    else:
+        try:
+            tvh_port = xbmcaddon.Addon().getSetting('tvhport')
+        except:
+            tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value="9981")
+except:
+    pass
+
+tvh_port = xbmcaddon.Addon().getSetting('tvhport')
+tvh_usern = xbmcaddon.Addon().getSetting('usern')
+tvh_passw = xbmcaddon.Addon().getSetting('passw')
+if tvh_usern != "" and tvh_passw != "":
+    tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
+else:
+    tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+
+try:
+    check_url = 'http://' + tvh_url + ':' + tvh_port + '/api/status/connections'
+    check_load = requests.get(check_url)
+    check_status = check_load.raise_for_status()
+except requests.exceptions.HTTPError as err:
+        dialog.ok("Tvheadend Access Error!", str(err), "", "Please check your username/password in settings.")
+except requests.exceptions.RequestException as e:
+    dialog.ok("Tvheadend Access Error!", "Could not connect to Tvheadend server.", "Please check your Tvheadend server is running or check the IP and port configuration in the settings.")
+
 def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
 def create_cList():
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=USA&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()
     contentDict = json.loads(content)
     stationDict = {}
@@ -102,18 +140,24 @@ def channels():
 
 @plugin.route('/location')
 def location():
-    country = ['USA', 'CAN']
-    countryNew = dialog.select('Select your country', list=country)
-    zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
+    global country
+    countryPick = ['USA', 'CAN']
+    countryNew = dialog.select('Select your country', list=countryPick)
+    if countryNew == 0:
+        zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_NUMERIC)
+    if countryNew == 1:
+        zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
     if not zipcodeNew:
         return
     zipcodeNew =re.sub(' ', '', zipcodeNew)
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
     if countryNew == 0:
+        country = 'USA'
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
         lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
     if countryNew == 1:
+        country = 'CAN'
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
@@ -203,6 +247,10 @@ def index():
 if __name__ == '__main__':
     try:
         zipcode = xbmcaddon.Addon().getSetting('zipcode')
+        if zipcode.isdigit():
+            country = 'USA'
+        else:
+            country = 'CAN'
         lineup = xbmcaddon.Addon().getSetting('lineup')
         if zipcode == '' or lineup == '':
             zipConfig = dialog.yesno('No Lineup Configured!', 'You need to configure your lineup location before running zap2epg.', '', 'Would you like to setup your lineup?')

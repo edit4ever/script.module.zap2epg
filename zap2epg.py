@@ -28,6 +28,7 @@ import sys
 from os.path import dirname
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
+import hashlib
 
 
 def mainRun(userdata):
@@ -59,9 +60,24 @@ def mainRun(userdata):
             epicon = settingsDict[setting]
         if setting == 'epgenre':
             epgenre = settingsDict[setting]
+        if setting == 'tvhurl':
+            tvhurl = settingsDict[setting]
+        if setting == 'tvhport':
+            tvhport = settingsDict[setting]
+        if setting == 'usern':
+            usern = settingsDict[setting]
+        if setting == 'passw':
+            passw = settingsDict[setting]
+        if setting == 'chmatch':
+            chmatch = settingsDict[setting]
+        if setting == 'tvhmatch':
+            tvhmatch = settingsDict[setting]
         if setting.startswith('desc'):
             xdescOrderDict[setting] = (settingsDict[setting])
     xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
+    if lineupcode != 'lineupId':
+        chmatch = 'false'
+        tvhmatch = 'false'
     if zipcode.isdigit():
         country = 'USA'
     else:
@@ -72,7 +88,16 @@ def mainRun(userdata):
     dayHours = int(days) * 8 # set back to 8 when done testing
     gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
+    tvhMatchDict = {}
 
+    def tvhMatchGet():
+        channels_url = 'http://' + tvhurl + ':' + tvhport + '/api/channel/grid?all=1&limit=999999999&sort=name'
+        response = urllib2.urlopen(channels_url)
+        channels = json.load(response)
+        for ch in channels['entries']:
+            channelName = ch['name']
+            channelNum = ch['number']
+            tvhMatchDict[channelNum] = channelName
 
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
@@ -180,7 +205,6 @@ def mainRun(userdata):
                 genreList = ["Variety show"]
         return genreList
 
-
     def printHeader(fh, enc):
         logging.info('Creating xmltv.xml file...')
         fh.write("<?xml version=\"1.0\" encoding=\""+ enc + "\"?>\n")
@@ -201,12 +225,15 @@ def mainRun(userdata):
                 scheduleSort = OrderedDict(sorted(schedule.iteritems(), key=lambda x: x[1]['chfcc']))
             for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
+                if 'chtvh' in scheduleSort[station] and scheduleSort[station]['chtvh'] is not None:
+                    xchtvh = scheduleSort[station]['chtvh']
+                    fh.write('\t\t<display-name>' + xchtvh + '</display-name>\n')
                 if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     xchfcc = scheduleSort[station]['chfcc']
+                    fh.write('\t\t<display-name>' + xchnum + ' ' + xchfcc + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchfcc + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
-                    fh.write('\t\t<display-name>' + xchnum + ' ' + xchfcc + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chfcc']
                     fh.write('\t\t<display-name>' + xcfcc + '</display-name>\n')
@@ -231,69 +258,70 @@ def mainRun(userdata):
                 lang = 'en'
                 sdict = schedule[station]
                 for episode in sdict:
-                    try:
-                        edict = sdict[episode]
-                        if 'epstart' in edict:
-                            startTime = convTime(edict['epstart'])
-                            is_dst = time.daylight and time.localtime().tm_isdst > 0
-                            TZoffset = "%.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
-                            stopTime = convTime(edict['epend'])
-                            fh.write('\t<programme start=\"' + startTime + ' ' + TZoffset + '\" stop=\"' + stopTime + ' ' + TZoffset + '\" channel=\"' + station + '.zap2epg' + '\">\n')
-                            fh.write('\t\t<episode-num system=\"dd_progid\">' + edict['epid'] + '</episode-num>\n')
-                            if edict['epshow'] is not None:
-                                fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
-                            if edict['eptitle'] is not None:
-                                fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
-                            if xdesc == 'true':
-                                xdescSort = addXDetails(edict)
-                                fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
-                            if xdesc == 'false':
-                                if edict['epdesc'] is not None:
-                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
-                            if edict['epsn'] is not None and edict['epen'] is not None:
-                                fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
-                                fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
-                            if edict['epyear'] is not None:
-                                fh.write('\t\t<date>' + edict['epyear'] + '</date>\n')
-                            if not episode.startswith("MV"):
-                                if epicon == '1':
-                                    if edict['epimage'] is not None and edict['epimage'] != '':
-                                        fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epimage'] + '.jpg" />\n')
-                                    else:
+                    if not episode.startswith("ch"):
+                        try:
+                            edict = sdict[episode]
+                            if 'epstart' in edict:
+                                startTime = convTime(edict['epstart'])
+                                is_dst = time.daylight and time.localtime().tm_isdst > 0
+                                TZoffset = "%.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
+                                stopTime = convTime(edict['epend'])
+                                fh.write('\t<programme start=\"' + startTime + ' ' + TZoffset + '\" stop=\"' + stopTime + ' ' + TZoffset + '\" channel=\"' + station + '.zap2epg' + '\">\n')
+                                fh.write('\t\t<episode-num system=\"dd_progid\">' + edict['epid'] + '</episode-num>\n')
+                                if edict['epshow'] is not None:
+                                    fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
+                                if edict['eptitle'] is not None:
+                                    fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
+                                if xdesc == 'true':
+                                    xdescSort = addXDetails(edict)
+                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
+                                if xdesc == 'false':
+                                    if edict['epdesc'] is not None:
+                                        fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
+                                if edict['epsn'] is not None and edict['epen'] is not None:
+                                    fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
+                                    fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
+                                if edict['epyear'] is not None:
+                                    fh.write('\t\t<date>' + edict['epyear'] + '</date>\n')
+                                if not episode.startswith("MV"):
+                                    if epicon == '1':
+                                        if edict['epimage'] is not None and edict['epimage'] != '':
+                                            fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epimage'] + '.jpg" />\n')
+                                        else:
+                                            if edict['epthumb'] is not None and edict['epthumb'] != '':
+                                                fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
+                                    if epicon == '2':
                                         if edict['epthumb'] is not None and edict['epthumb'] != '':
                                             fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
-                                if epicon == '2':
+                                if episode.startswith("MV"):
                                     if edict['epthumb'] is not None and edict['epthumb'] != '':
                                         fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
-                            if episode.startswith("MV"):
-                                if edict['epthumb'] is not None and edict['epthumb'] != '':
-                                    fh.write('\t\t<icon src="https://zap2it.tmsimg.com/assets/' + edict['epthumb'] + '.jpg" />\n')
-                            if not any(i in ['New', 'Live'] for i in edict['epflag']):
-                                fh.write("\t\t<previously-shown ")
-                                if edict['epoad'] is not None and int(edict['epoad']) > 0:
-                                    fh.write("start=\"" + convTime(edict['epoad']) + " " + TZoffset + "\"")
-                                fh.write(" />\n")
-                            if edict['epflag'] is not None:
-                                if 'New' in edict['epflag']:
-                                    fh.write("\t\t<new />\n")
-                                if 'Live' in edict['epflag']:
-                                    fh.write("\t\t<live />\n")
-                            if edict['eprating'] is not None:
-                                fh.write('\t\t<rating>\n\t\t\t<value>' + edict['eprating'] + '</value>\n\t\t</rating>\n')
-                            if edict['epstar'] is not None:
-                                fh.write('\t\t<star-rating>\n\t\t\t<value>' + edict['epstar'] + '/4</value>\n\t\t</star-rating>\n')
-                            if epgenre != '0':
-                                if edict['epfilter'] is not None and edict['epgenres'] is not None:
-                                    genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
-                                    for genre in genreNewList:
-                                        fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
-                            fh.write("\t</programme>\n")
-                            episodeCount += 1
-                    except Exception as e:
-                        logging.exception('No data for episode %s:', episode)
-                        #fn = os.path.join(cacheDir, episode + '.json')
-                        #os.remove(fn)
-                        #logging.info('Deleting episode %s:', episode)
+                                if not any(i in ['New', 'Live'] for i in edict['epflag']):
+                                    fh.write("\t\t<previously-shown ")
+                                    if edict['epoad'] is not None and int(edict['epoad']) > 0:
+                                        fh.write("start=\"" + convTime(edict['epoad']) + " " + TZoffset + "\"")
+                                    fh.write(" />\n")
+                                if edict['epflag'] is not None:
+                                    if 'New' in edict['epflag']:
+                                        fh.write("\t\t<new />\n")
+                                    if 'Live' in edict['epflag']:
+                                        fh.write("\t\t<live />\n")
+                                if edict['eprating'] is not None:
+                                    fh.write('\t\t<rating>\n\t\t\t<value>' + edict['eprating'] + '</value>\n\t\t</rating>\n')
+                                if edict['epstar'] is not None:
+                                    fh.write('\t\t<star-rating>\n\t\t\t<value>' + edict['epstar'] + '/4</value>\n\t\t</star-rating>\n')
+                                if epgenre != '0':
+                                    if edict['epfilter'] is not None and edict['epgenres'] is not None:
+                                        genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
+                                        for genre in genreNewList:
+                                            fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                                fh.write("\t</programme>\n")
+                                episodeCount += 1
+                        except Exception as e:
+                            logging.exception('No data for episode %s:', episode)
+                            #fn = os.path.join(cacheDir, episode + '.json')
+                            #os.remove(fn)
+                            #logging.info('Deleting episode %s:', episode)
         except Exception as e:
             logging.exception('Exception: printEpisodes')
 
@@ -318,14 +346,44 @@ def mainRun(userdata):
                 if stationList != '':
                     if skey in stationList:
                         schedule[skey] = {}
-                        schedule[skey]['chnum'] = station.get('channelNo')
-                        schedule[skey]['chfcc'] = station.get('callSign')
+                        chName = station.get('callSign')
+                        schedule[skey]['chfcc'] = chName
                         schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
+                        chnumStart = station.get('channelNo')
+                        if '.' not in chnumStart and chmatch == 'true' and chName is not None:
+                            chsub = re.search('(\d+)$', chName)
+                            if chsub is not None:
+                                chnumUpdate = chnumStart + '.' + chsub.group(0)
+                            else:
+                                chnumUpdate = chnumStart + '.1'
+                        else:
+                            chnumUpdate = chnumStart
+                        schedule[skey]['chnum'] = chnumUpdate
+                        if tvhmatch == 'true' and '.' in chnumUpdate:
+                            if chnumUpdate in tvhMatchDict:
+                                schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
+                            else:
+                                schedule[skey]['chtvh'] = None
                 else:
                     schedule[skey] = {}
-                    schedule[skey]['chnum'] = station.get('channelNo')
-                    schedule[skey]['chfcc'] = station.get('callSign')
+                    chName = station.get('callSign')
+                    schedule[skey]['chfcc'] = chName
                     schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
+                    chnumStart = station.get('channelNo')
+                    if '.' not in chnumStart and chmatch == 'true' and chName is not None:
+                        chsub = re.search('(\d+)$', chName)
+                        if chsub is not None:
+                            chnumUpdate = chnumStart + '.' + chsub.group(0)
+                        else:
+                            chnumUpdate = chnumStart + '.1'
+                    else:
+                        chnumUpdate = chnumStart
+                    schedule[skey]['chnum'] = chnumUpdate
+                    if tvhmatch == 'true' and '.' in chnumUpdate:
+                        if chnumUpdate in tvhMatchDict:
+                            schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
+                        else:
+                            schedule[skey]['chtvh'] = None
         except Exception as e:
             logging.exception('Exception: parseStations')
 
@@ -614,6 +672,8 @@ def mainRun(userdata):
         gridtime = gridtimeStart
         if stationList == '':
             logging.info('No channel list found - adding all stations!')
+        if tvhmatch == 'true':
+            tvhMatchGet()
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
@@ -649,10 +709,10 @@ def mainRun(userdata):
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
 ####### remove this block after testing
-        # dictFileName = 'schedule.json'
+        # dictFileName = 'REdict.json'
         # DictFileDir = os.path.join(userdata, dictFileName)
         # with open(DictFileDir, 'w') as fp:
-        #     json.dump(schedule, fp)
+        #     json.dump(REdict, fp)
         # dictFileNameTxt = 'schedule.txt'
         # DictFileTxtDir = os.path.join(userdata, dictFileNameTxt)
         # f = open(DictFileTxtDir,"w")

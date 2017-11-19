@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.4.0" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="0.5.0" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,13 +29,8 @@ Setup:
     <email></email>
     <source></source>
     <news>
-    v0.4.0 - adds option to adjust genre information
-    v0.3.5 - fixes missing episodes
-    v0.3.2 - fixes url change for location
-    v0.3.0 - adds generic timezone lineups and station/channels icons | removes old episode data from cache (2017-11-07)
-    v0.2.1 - fix for location name and JSON file errors (2017-11-02)
-    v0.2.0 - modified for new zap2it guide data (2017-10-27)
-    v0.1.0 - initial test release (2017-10-24)
+    v0.5.0 - add tvheadend subchannel and match option (2017-11-19)
+    v0.4.1 - adds option to adjust genre information (2017-11-16)
     </news>
     <assets>
         <icon>resources/icon.png</icon>
