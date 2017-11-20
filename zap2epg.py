@@ -455,6 +455,7 @@ def mainRun(userdata):
 
     def parseXdetails():
         showList = []
+        failList = []
         try:
             for station in schedule:
                 sdict = schedule[station]
@@ -466,7 +467,7 @@ def mainRun(userdata):
                         filename = EPseries + '.json'
                         fileDir = os.path.join(cacheDir, filename)
                         try:
-                            if not os.path.exists(fileDir):
+                            if not os.path.exists(fileDir) and EPseries not in failList:
                                 retry = 3
                                 while retry > 0:
                                     logging.info('Downloading details data for: %s', EPseries)
@@ -520,6 +521,7 @@ def mainRun(userdata):
                                     os.remove(fileDir)
                             else:
                                 logging.warn('Could not download details data for: %s - skipping episode', episode)
+                                failList.append(EPseries)
                         except Exception as e:
                             logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
                             #os.remove(fileDir)
