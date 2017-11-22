@@ -227,17 +227,17 @@ def mainRun(userdata):
             for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
                 if 'chtvh' in scheduleSort[station] and scheduleSort[station]['chtvh'] is not None:
-                    xchtvh = scheduleSort[station]['chtvh']
+                    xchtvh = re.sub('&','&amp;',scheduleSort[station]['chtvh'])
                     fh.write('\t\t<display-name>' + xchtvh + '</display-name>\n')
                 if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     xchfcc = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + xchnum + ' ' + xchfcc + '</display-name>\n')
-                    fh.write('\t\t<display-name>' + xchfcc + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + xchnum + ' ' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + xcfcc + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xcfcc) + '</display-name>\n')
                 elif 'chnum' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
