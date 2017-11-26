@@ -92,13 +92,20 @@ def mainRun(userdata):
     tvhMatchDict = {}
 
     def tvhMatchGet():
-        channels_url = 'http://' + tvhurl + ':' + tvhport + '/api/channel/grid?all=1&limit=999999999&sort=name'
-        response = urllib2.urlopen(channels_url)
-        channels = json.load(response)
-        for ch in channels['entries']:
-            channelName = ch['name']
-            channelNum = ch['number']
-            tvhMatchDict[channelNum] = channelName
+        if usern != "" and passw != "":
+            tvhUrlFull = usern + ":" + passw + "@" + tvhurl
+        else:
+            tvhUrlFull = tvhurl
+        try:
+            channels_url = 'http://' + tvhUrlFull + ':' + tvhport + '/api/channel/grid?all=1&limit=999999999&sort=name'
+            response = urllib2.urlopen(channels_url)
+            channels = json.load(response)
+            for ch in channels['entries']:
+                channelName = ch['name']
+                channelNum = ch['number']
+                tvhMatchDict[channelNum] = channelName
+        except urllib2.HTTPError as err:
+            logging.exception('Exception: tvhMatch - %s', e.strerror)
 
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
@@ -124,7 +131,7 @@ def mainRun(userdata):
                             except OSError, e:
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
-            logging.exception('Exception: deleteOldCache')
+            logging.exception('Exception: deleteOldCache - %s', e.strerror)
 
     def convTime(t):
         return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))

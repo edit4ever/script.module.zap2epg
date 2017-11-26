@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.5.2" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="0.5.3" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,7 +29,8 @@ Setup:
     <email></email>
     <source></source>
     <news>
-    v0.5.2 - fix for channel names with ampersand (2017-11-22)  
+    v0.5.3 - fix for TVH username-password (2017-11-26)
+    v0.5.2 - fix for channel names with ampersand (2017-11-22)
     v0.5.0 - add tvheadend subchannel and match option (2017-11-19)
     v0.4.1 - adds option to adjust genre information (2017-11-16)
     </news>
