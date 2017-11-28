@@ -507,7 +507,7 @@ def mainRun(userdata):
                                     edict['epfan'] = EPdetails.get('backgroundImage')
                                     EPgenres = EPdetails.get('seriesGenres')
                                     edict['epgenres'] = EPgenres.split('|')
-                                    if episode.startswith("MV"):
+                                    if filename.startswith("MV"):
                                         edict['epcredits'] = EPdetails['overviewTab'].get('cast')
                                     #edict['epstar'] = EPdetails.get('starRating')
                                     EPlist = EPdetails['upcomingEpisodeTab']
