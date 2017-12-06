@@ -38,8 +38,15 @@ def mainRun(userdata):
     root = settings.getroot()
     settingsDict = {}
     xdescOrderDict = {}
+    kodiVersion = root.attrib.get('version')
+    logging.info('Kodi settings version is: %s', kodiVersion)
     for setting in root.findall('setting'):
-        settingStr = setting.get('value')
+        if kodiVersion == '2':
+            settingStr = setting.text
+        else:
+            settingStr = setting.get('value')
+            if settingStr == '':
+                settingStr = None
         settingID = setting.get('id')
         settingsDict[settingID] = settingStr
     for setting in settingsDict:
@@ -92,20 +99,28 @@ def mainRun(userdata):
     tvhMatchDict = {}
 
     def tvhMatchGet():
-        if usern != "" and passw != "":
-            tvhUrlFull = usern + ":" + passw + "@" + tvhurl
+        tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
+        channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name'
+        if usern is not None and passw is not None:
+            logging.info('Adding Tvheadend username and password to request url...')
+            password_mgr = urllib2.HTTPDigestAuthHandler()
+            password_mgr.add_password(realm='tvheadend', uri=channels_url, user=usern, passwd=passw)
+            opener = urllib2.build_opener(password_mgr)
+            response = opener.open(channels_url)
         else:
-            tvhUrlFull = tvhurl
-        try:
-            channels_url = 'http://' + tvhUrlFull + ':' + tvhport + '/api/channel/grid?all=1&limit=999999999&sort=name'
+            channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name'
             response = urllib2.urlopen(channels_url)
+        try:
+            logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
             channels = json.load(response)
             for ch in channels['entries']:
                 channelName = ch['name']
                 channelNum = ch['number']
                 tvhMatchDict[channelNum] = channelName
-        except urllib2.HTTPError as err:
+            logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
+        except urllib2.HTTPError as e:
             logging.exception('Exception: tvhMatch - %s', e.strerror)
+            pass
 
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
@@ -351,7 +366,7 @@ def mainRun(userdata):
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
                 skey = station.get('channelId')
-                if stationList != '':
+                if stationList is not None:
                     if skey in stationList:
                         schedule[skey] = {}
                         chName = station.get('callSign')
@@ -400,7 +415,7 @@ def mainRun(userdata):
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
                 skey = station.get('channelId')
-                if stationList != '':
+                if stationList is not None:
                     if skey in stationList:
                         episodes = station.get('events')
                         for episode in episodes:
@@ -680,7 +695,7 @@ def mainRun(userdata):
             os.mkdir(cacheDir)
         count = 0
         gridtime = gridtimeStart
-        if stationList == '':
+        if stationList is None:
             logging.info('No channel list found - adding all stations!')
         if tvhmatch == 'true':
             tvhMatchGet()
@@ -695,6 +710,7 @@ def mainRun(userdata):
                     savepage(fileDir, saveContent)
                 except:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
+                    logging.warn('URL: %s', url)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:

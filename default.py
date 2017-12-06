@@ -64,11 +64,12 @@ except:
 tvh_port = xbmcaddon.Addon().getSetting('tvhport')
 tvh_usern = xbmcaddon.Addon().getSetting('usern')
 tvh_passw = xbmcaddon.Addon().getSetting('passw')
-if tvh_usern != "" and tvh_passw != "":
-    tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
-else:
+if tvh_usern == None and tvh_passw == None:
     tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-
+elif tvh_usern == "" and tvh_passw == "":
+    tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+else:
+    tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
 try:
     check_url = 'http://' + tvh_url + ':' + tvh_port + '/api/status/connections'
     check_load = requests.get(check_url)
