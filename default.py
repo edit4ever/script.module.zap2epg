@@ -223,7 +223,6 @@ def location():
 
 @plugin.route('/run')
 def run():
-    logging.basicConfig(filename=log, filemode='w',format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG, disable_existing_loggers=False)
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     status = zap2epg.mainRun(userdata)
     dialog.ok('zap2epg Finished!', 'zap2epg completed in ' + str(status[0]) + ' seconds.', '', str(status[1]) + ' Stations and ' + str(status[2]) + ' Episodes written to xmltv.xml file.')
