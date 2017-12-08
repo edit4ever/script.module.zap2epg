@@ -36,6 +36,7 @@ if not os.path.exists(userdata):
         os.mkdir(userdata)
 log = os.path.join(userdata, 'zap2epg.log')
 Clist = os.path.join(userdata, 'channels.json')
+tvhList =  os.path.join(userdata, 'TVHchannels.json')
 cacheDir = os.path.join(userdata, 'cache')
 plugin = Plugin()
 dialog = xbmcgui.Dialog()
@@ -84,6 +85,24 @@ def get_icon_path(icon_name):
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
 def create_cList():
+    if not os.path.isfile(tvhList):
+            channels_url = 'http://' + tvh_url + ':' + tvh_port + '/api/channel/grid?all=1&limit=999999999&sort=name'
+            response = requests.get(channels_url)
+            try:
+                logging.info('Accessing Tvheadend channel list from: %s', channels_url)
+                channels = response.json()
+                with open(tvhList,"w") as f:
+                    json.dump(channels,f)
+            except urllib2.HTTPError as e:
+                logging.exception('Exception: tvhClist - %s', e.strerror)
+                pass
+    with open(tvhList) as tvhData:
+        tvhClist = []
+        tvhDict = json.load(tvhData)
+        for ch in tvhDict['entries']:
+            channelEnabled = ch['enabled']
+            if channelEnabled == True:
+                tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
     url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()
@@ -95,7 +114,10 @@ def create_cList():
             stationDict[skey] = {}
             stationDict[skey]['name'] = channel.get('callSign')
             stationDict[skey]['num'] = channel.get('channelNo')
-            stationDict[skey]['include'] = 'False'
+            if channel.get('channelNo') in tvhClist:
+                stationDict[skey]['include'] = 'True'
+            else:
+                stationDict[skey]['include'] = 'False'
     stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
     with open(Clist,"w") as f:
         json.dump(stationDictSort,f)
@@ -202,10 +224,7 @@ def location():
 @plugin.route('/run')
 def run():
     logging.basicConfig(filename=log, filemode='w',format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG, disable_existing_loggers=False)
-    days = xbmcaddon.Addon().getSetting('days')
-    lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    xdetails = xbmcaddon.Addon().getSetting('xdetails')
-    slist = xbmcaddon.Addon().getSetting('slist')
+    logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     status = zap2epg.mainRun(userdata)
     dialog.ok('zap2epg Finished!', 'zap2epg completed in ' + str(status[0]) + ' seconds.', '', str(status[1]) + ' Stations and ' + str(status[2]) + ' Episodes written to xmltv.xml file.')
 

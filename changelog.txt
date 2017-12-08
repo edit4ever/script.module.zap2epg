@@ -1,3 +1,6 @@
+v0.6.1 (2017-12-8)
+  - OTA Tvheadend channels pre-selected in channels list
+
 v0.6.0 (2017-12-7)
   - add Kodi 18 (LE9) compatibility and fix TVH username-password
 
