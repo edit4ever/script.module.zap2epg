@@ -100,7 +100,7 @@ def mainRun(userdata):
 
     def tvhMatchGet():
         tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
-        channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name'
+        channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
         if usern is not None and passw is not None:
             logging.info('Adding Tvheadend username and password to request url...')
             password_mgr = urllib2.HTTPDigestAuthHandler()
@@ -108,7 +108,6 @@ def mainRun(userdata):
             opener = urllib2.build_opener(password_mgr)
             response = opener.open(channels_url)
         else:
-            channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name'
             response = urllib2.urlopen(channels_url)
         try:
             logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
@@ -162,9 +161,9 @@ def mainRun(userdata):
     def genreSort(EPfilter, EPgenre):
         genreList = []
         if epgenre == '2':
-            for f in EPfilter:
-                fClean = re.sub('filter-','',f)
-                genreList.append(fClean)
+            # for f in EPfilter:
+            #     fClean = re.sub('filter-','',f)
+            #     genreList.append(fClean)
             for g in EPgenre:
                 if g != "Comedy":
                     genreList.append(g)
@@ -199,9 +198,9 @@ def mainRun(userdata):
             if 'Music' in genreList:
                 genreList.insert(0, "Music / Ballet / Dance")
         if epgenre == '1':
-            for f in EPfilter:
-                fClean = re.sub('filter-','',f)
-                genreList.append(fClean)
+            # for f in EPfilter:
+            #     fClean = re.sub('filter-','',f)
+            #     genreList.append(fClean)
             for g in EPgenre:
                 genreList.append(g)
             if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
@@ -226,6 +225,15 @@ def mainRun(userdata):
                 genreList = ["Children's / Youth programs"]
             else:
                 genreList = ["Variety show"]
+        if epgenre == '3':
+            # for f in EPfilter:
+            #     fClean = re.sub('filter-','',f)
+            #     genreList.append(fClean)
+            for g in EPgenre:
+                genreList.append(g)
+        if 'Movie' in genreList:
+            genreList.remove('Movie')
+            genreList.insert(0, 'Movie')
         return genreList
 
     def printHeader(fh, enc):
@@ -521,9 +529,10 @@ def mainRun(userdata):
                                     edict['epimage'] = EPdetails.get('seriesImage')
                                     edict['epfan'] = EPdetails.get('backgroundImage')
                                     EPgenres = EPdetails.get('seriesGenres')
-                                    edict['epgenres'] = EPgenres.split('|')
                                     if filename.startswith("MV"):
                                         edict['epcredits'] = EPdetails['overviewTab'].get('cast')
+                                        EPgenres = 'Movie|' + EPgenres
+                                    edict['epgenres'] = EPgenres.split('|')
                                     #edict['epstar'] = EPdetails.get('starRating')
                                     EPlist = EPdetails['upcomingEpisodeTab']
                                     EPid = edict['epid']
@@ -619,6 +628,9 @@ def mainRun(userdata):
                 for opt in cleanedList:
                     thisOption = getSortName(int(opt))
                     if int(opt) <= 8 and lastOption <= 8:
+                        if int(opt) == 2 and len(sortOrderList) > 1:
+                            del sortOrderList[-1]
+                            sortOrderList.append(thisOption)
                         lastOption = int(opt)
                     elif thisOption and lastOption:
                         sortOrderList.append(thisOption)
@@ -651,7 +663,7 @@ def mainRun(userdata):
                 #new = edict['epfin'] + space
             if edict['eptags'] != []:
                 tagsList = edict['eptags']
-                cc = ' '.join(tagsList).upper() + space
+                cc = ' | '.join(tagsList).upper() + space
             #if edict['ephd'] is not None:
                 #hd = edict['ephd'] + space
             if edict['epsn'] is not None and edict['epen'] is not None:

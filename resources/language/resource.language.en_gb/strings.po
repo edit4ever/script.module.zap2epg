@@ -80,7 +80,11 @@ msgctxt "#32033"
 msgid "Full"
 msgstr ""
 
-# 32034-32039 blank
+msgctxt "#32034"
+msgid "Original"
+msgstr ""
+
+# 32035-32039 blank
 
 msgctxt "#32040"
 msgid "Tvheadend"

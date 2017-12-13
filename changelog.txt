@@ -1,8 +1,13 @@
+v0.6.2 (2017-12-13)
+ - Only match Tvheadend channels that are enabled
+ - Add option for original genre categories
+ - various fixes for extra description listings
+
 v0.6.1 (2017-12-8)
-  - OTA Tvheadend channels pre-selected in channels list
+ - OTA Tvheadend channels pre-selected in channels list
 
 v0.6.0 (2017-12-7)
-  - add Kodi 18 (LE9) compatibility and fix TVH username-password
+ - add Kodi 18 (LE9) compatibility and fix TVH username-password
 
 v0.5.4 (2017-11-28)
  - fix for movie cast info
