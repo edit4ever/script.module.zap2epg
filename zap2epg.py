@@ -15,6 +15,7 @@
 ################################################################################
 
 import urllib2
+import base64
 import codecs
 import time
 import datetime
@@ -90,7 +91,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-0.6.2 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-0.6.3 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -103,10 +104,9 @@ def mainRun(userdata):
         channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
         if usern is not None and passw is not None:
             logging.info('Adding Tvheadend username and password to request url...')
-            password_mgr = urllib2.HTTPDigestAuthHandler()
-            password_mgr.add_password(realm='tvheadend', uri=channels_url, user=usern, passwd=passw)
-            opener = urllib2.build_opener(password_mgr)
-            response = opener.open(channels_url)
+            request = urllib2.Request(channels_url)
+            request.add_header('Authorization', b'Basic ' + base64.b64encode(usern + b':' + passw))
+            response = urllib2.urlopen(request)
         else:
             response = urllib2.urlopen(channels_url)
         try:
@@ -652,7 +652,7 @@ def mainRun(userdata):
                 ratings = edict['eprating'] + space
             if edict['epflag'] != []:
                 flagList = edict['epflag']
-                new = ' '.join(flagList).upper() + space
+                new = ' - '.join(flagList).upper() + space
             #if edict['epnew'] is not None:
                 #new = edict['epnew'] + space
             #if edict['eplive'] is not None:

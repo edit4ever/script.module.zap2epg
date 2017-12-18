@@ -1,3 +1,6 @@
+v0.6.3 (2017-12-18)
+ - fixes Tvh service name issue with username-password
+
 v0.6.2 (2017-12-13)
  - Only match Tvheadend channels that are enabled
  - Add option for original genre categories
