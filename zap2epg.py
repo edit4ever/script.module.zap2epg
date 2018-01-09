@@ -69,6 +69,8 @@ def mainRun(userdata):
             epicon = settingsDict[setting]
         if setting == 'epgenre':
             epgenre = settingsDict[setting]
+        if setting == 'tvhoff':
+            tvhoff = settingsDict[setting]
         if setting == 'tvhurl':
             tvhurl = settingsDict[setting]
         if setting == 'tvhport':
@@ -91,7 +93,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-0.6.3 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-0.7.0 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -709,7 +711,7 @@ def mainRun(userdata):
         gridtime = gridtimeStart
         if stationList is None:
             logging.info('No channel list found - adding all stations!')
-        if tvhmatch == 'true':
+        if tvhoff == 'true' and tvhmatch == 'true':
             tvhMatchGet()
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
@@ -746,17 +748,6 @@ def mainRun(userdata):
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
-####### remove this block after testing
-        # dictFileName = 'REdict.json'
-        # DictFileDir = os.path.join(userdata, dictFileName)
-        # with open(DictFileDir, 'w') as fp:
-        #     json.dump(REdict, fp)
-        # dictFileNameTxt = 'schedule.txt'
-        # DictFileTxtDir = os.path.join(userdata, dictFileNameTxt)
-        # f = open(DictFileTxtDir,"w")
-        # f.write( str(schedule) )
-        # f.close()
-####### remove this block after testing
         return timeRun, stationCount, episodeCount
     except Exception as e:
         logging.exception('Exception: main')

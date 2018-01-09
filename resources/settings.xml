@@ -31,12 +31,14 @@
     <setting label="32229" type="enum" id="desc20" default="0" lvalues="32300|32301|32320|32302|32321|32322|32323|32324|32325|32303|32304|32305|32306|32307|32308|32309|32310|32311|32312|32313|32314"/>
   </category>
   <category label="32040">
-    <setting label="32045" type="ipaddress" id="tvhurl" default="127.0.0.1"/>
-    <setting label="32046" type="number" id="tvhport" default="9981"/>
-    <setting label="32041" type="text" id="usern" default=""/>
-    <setting label="32042" type="text" id="passw" default=""/>
-    <setting label="32043" type="bool" id="chmatch" default="true"/>
-    <setting label="32044" type="bool" id="tvhmatch" default="true"/>
+    <setting label="32049" type="bool" id="tvhoff" default="true"/>
+    <setting type="sep"/>
+    <setting label="32045" enable="eq(-2,true)" type="ipaddress" id="tvhurl" default="127.0.0.1"/>
+    <setting label="32046" enable="eq(-3,true)" type="number" id="tvhport" default="9981"/>
+    <setting label="32041" enable="eq(-4,true)" type="text" id="usern" default=""/>
+    <setting label="32042" enable="eq(-5,true)" type="text" id="passw" default=""/>
+    <setting label="32043" enable="eq(-6,true)" type="bool" id="chmatch" default="true"/>
+    <setting label="32044" enable="eq(-7,true)" type="bool" id="tvhmatch" default="true"/>
   </category>
   <category label="32001">
     <setting label="32002" type="text" id="zipcode" default=""/>

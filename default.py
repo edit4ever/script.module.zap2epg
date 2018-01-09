@@ -32,6 +32,7 @@ import _strptime
 import requests
 
 userdata = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
+tvhoff = xbmcaddon.Addon().getSetting('tvhoff')
 if not os.path.exists(userdata):
         os.mkdir(userdata)
 log = os.path.join(userdata, 'zap2epg.log')
@@ -42,43 +43,44 @@ plugin = Plugin()
 dialog = xbmcgui.Dialog()
 gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
 
-try:
-    tvh_url_get = xbmcaddon.Addon('pvr.hts').getSetting("host")
-    if tvh_url_get:
-        tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value=tvh_url_get)
-    else:
-        try:
-            tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-        except:
-            tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value="127.0.0.1")
-    tvh_port_get = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
-    if tvh_port_get:
-        tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value=tvh_port_get)
-    else:
-        try:
-            tvh_port = xbmcaddon.Addon().getSetting('tvhport')
-        except:
-            tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value="9981")
-except:
-    pass
+if tvhoff == 'true':
+    try:
+        tvh_url_get = xbmcaddon.Addon('pvr.hts').getSetting("host")
+        if tvh_url_get:
+            tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value=tvh_url_get)
+        else:
+            try:
+                tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+            except:
+                tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value="127.0.0.1")
+        tvh_port_get = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
+        if tvh_port_get:
+            tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value=tvh_port_get)
+        else:
+            try:
+                tvh_port = xbmcaddon.Addon().getSetting('tvhport')
+            except:
+                tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value="9981")
+    except:
+        pass
 
-tvh_port = xbmcaddon.Addon().getSetting('tvhport')
-tvh_usern = xbmcaddon.Addon().getSetting('usern')
-tvh_passw = xbmcaddon.Addon().getSetting('passw')
-if tvh_usern == None and tvh_passw == None:
-    tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-elif tvh_usern == "" and tvh_passw == "":
-    tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-else:
-    tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
-try:
-    check_url = 'http://' + tvh_url + ':' + tvh_port + '/api/status/connections'
-    check_load = requests.get(check_url)
-    check_status = check_load.raise_for_status()
-except requests.exceptions.HTTPError as err:
-        dialog.ok("Tvheadend Access Error!", str(err), "", "Please check your username/password in settings.")
-except requests.exceptions.RequestException as e:
-    dialog.ok("Tvheadend Access Error!", "Could not connect to Tvheadend server.", "Please check your Tvheadend server is running or check the IP and port configuration in the settings.")
+    tvh_port = xbmcaddon.Addon().getSetting('tvhport')
+    tvh_usern = xbmcaddon.Addon().getSetting('usern')
+    tvh_passw = xbmcaddon.Addon().getSetting('passw')
+    if tvh_usern == None and tvh_passw == None:
+        tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+    elif tvh_usern == "" and tvh_passw == "":
+        tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+    else:
+        tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
+    try:
+        check_url = 'http://' + tvh_url + ':' + tvh_port + '/api/status/connections'
+        check_load = requests.get(check_url)
+        check_status = check_load.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+            dialog.ok("Tvheadend Access Error!", str(err), "", "Please check your username/password in settings.")
+    except requests.exceptions.RequestException as e:
+        dialog.ok("Tvheadend Access Error!", "Could not connect to Tvheadend server.", "Please check your Tvheadend server is running or check the IP and port configuration in the settings.")
 
 def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")

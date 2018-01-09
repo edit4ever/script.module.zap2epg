@@ -114,7 +114,13 @@ msgctxt "#32046"
 msgid "Tvheadend Port"
 msgstr ""
 
-# 32047-32199 blank
+# 32047-32048 blank
+
+msgctxt "#32049"
+msgid "Tvheadend Options Enabled"
+msgstr ""
+
+# 32050-32199 blank
 
 msgctxt "#32200"
 msgid "X-Details Order"
