@@ -1,3 +1,6 @@
+v0.7.1 (2018-01-15)
+ - fixes issue with program id number (series recording error)
+
 v0.7.0 (2018-01-09)
  - adds option to disable Tvheadend functions
 

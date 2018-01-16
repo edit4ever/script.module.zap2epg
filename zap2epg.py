@@ -93,7 +93,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-0.7.0 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-0.7.1 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -300,7 +300,8 @@ def mainRun(userdata):
                                 TZoffset = "%.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
                                 stopTime = convTime(edict['epend'])
                                 fh.write('\t<programme start=\"' + startTime + ' ' + TZoffset + '\" stop=\"' + stopTime + ' ' + TZoffset + '\" channel=\"' + station + '.zap2epg' + '\">\n')
-                                fh.write('\t\t<episode-num system=\"dd_progid\">' + edict['epid'] + '</episode-num>\n')
+                                dd_progid = edict['epid']
+                                fh.write('\t\t<episode-num system=\"dd_progid\">' + dd_progid[:-4] + '.' + dd_progid[-4:] + '</episode-num>\n')
                                 if edict['epshow'] is not None:
                                     fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
                                 if edict['eptitle'] is not None:
