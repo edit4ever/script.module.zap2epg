@@ -182,11 +182,13 @@ def location():
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
         lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
+        deviceX = ['-', '-', '-', '-', '-', '-', '-']
     if countryNew == 1:
         country = 'CAN'
         url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
+        deviceX = ['-', '-', '-', '-', '-']
     content = urllib2.urlopen(url).read()
     lineupDict = json.loads(content)
     if 'Providers' in lineupDict:
@@ -199,6 +201,11 @@ def location():
             else:
                 lineupsN.append(lineupName)
             lineupsC.append(provider.get('headendId'))
+            deviceGet = provider.get('device')
+            if deviceGet == '' or deviceGet == ' ':
+                deviceGet = '-'
+            deviceX.append(deviceGet)
+
     else:
         dialog.ok('Error - No Providers!', 'No providers were found - please check zipcode and try again.')
         return
@@ -206,8 +213,10 @@ def location():
     if lineupSel:
         lineupSelCode = lineupsC[lineupSel]
         lineupSelName = lineupsN[lineupSel]
+        deviceSel = deviceX[lineupSel]
         xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
         xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelName)
+        xbmcaddon.Addon().setSetting(id='device', value=deviceSel)
         if os.path.exists(cacheDir):
             entries = os.listdir(cacheDir)
             for entry in entries:

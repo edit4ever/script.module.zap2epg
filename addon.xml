@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.7.1" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="0.7.2" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,7 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
-      v0.7.1 - fixes issue with program id number (series recording error)(2018-01-15)
+      v0.7.2 - fixes issue with certain digital lineups (2018-01-18)
     </news>
     <assets>
         <icon>resources/icon.png</icon>

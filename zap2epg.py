@@ -59,6 +59,8 @@ def mainRun(userdata):
             lineup = settingsDict[setting]
         if setting == 'lineupcode':
             lineupcode = settingsDict[setting]
+        if setting == 'device':
+            device = settingsDict[setting]
         if setting == 'days':
             days = settingsDict[setting]
         if setting == 'xdetails':
@@ -93,7 +95,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-0.7.1 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-0.7.2 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -720,7 +722,7 @@ def mainRun(userdata):
             if not os.path.exists(fileDir):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+                    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
                     saveContent = urllib2.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:

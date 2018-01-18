@@ -26,7 +26,11 @@ msgctxt "#32005"
 msgid "Station List"
 msgstr ""
 
-# 32006-32010 blank
+msgctxt "#32006"
+msgid "Device"
+msgstr ""
+
+# 32007-32010 blank
 
 msgctxt "#32011"
 msgid "Options"
