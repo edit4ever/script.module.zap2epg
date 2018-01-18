@@ -44,7 +44,7 @@
     <setting label="32002" type="text" id="zipcode" default=""/>
     <setting label="32003" type="text" id="lineup" default=""/>
     <setting label="32004" type="text" id="lineupcode" default=""/>
-    <setting label="32006" type="text" id="device" default=""/>
+    <setting label="32006" type="text" id="device" default="-"/>
     <setting label="32005" type="text" id="slist" default=""/>
   </category>
 </settings>
