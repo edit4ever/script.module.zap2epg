@@ -87,24 +87,25 @@ def get_icon_path(icon_name):
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
 def create_cList():
-    if not os.path.isfile(tvhList):
-            channels_url = 'http://' + tvh_url + ':' + tvh_port + '/api/channel/grid?all=1&limit=999999999&sort=name'
-            response = requests.get(channels_url)
-            try:
-                logging.info('Accessing Tvheadend channel list from: %s', channels_url)
-                channels = response.json()
-                with open(tvhList,"w") as f:
-                    json.dump(channels,f)
-            except urllib2.HTTPError as e:
-                logging.exception('Exception: tvhClist - %s', e.strerror)
-                pass
-    with open(tvhList) as tvhData:
-        tvhClist = []
-        tvhDict = json.load(tvhData)
-        for ch in tvhDict['entries']:
-            channelEnabled = ch['enabled']
-            if channelEnabled == True:
-                tvhClist.append(ch['number'])
+    tvhClist = []
+    if tvhoff == 'true':
+        if not os.path.isfile(tvhList):
+                channels_url = 'http://' + tvh_url + ':' + tvh_port + '/api/channel/grid?all=1&limit=999999999&sort=name'
+                response = requests.get(channels_url)
+                try:
+                    logging.info('Accessing Tvheadend channel list from: %s', channels_url)
+                    channels = response.json()
+                    with open(tvhList,"w") as f:
+                        json.dump(channels,f)
+                except urllib2.HTTPError as e:
+                    logging.exception('Exception: tvhClist - %s', e.strerror)
+                    pass
+        with open(tvhList) as tvhData:
+            tvhDict = json.load(tvhData)
+            for ch in tvhDict['entries']:
+                channelEnabled = ch['enabled']
+                if channelEnabled == True:
+                    tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
     url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()

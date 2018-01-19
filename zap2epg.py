@@ -95,7 +95,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-0.7.2 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-0.7.3 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
