@@ -107,7 +107,7 @@ def create_cList():
                 if channelEnabled == True:
                     tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=-&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()
     contentDict = json.loads(content)
     stationDict = {}
@@ -284,6 +284,7 @@ if __name__ == '__main__':
         else:
             country = 'CAN'
         lineup = xbmcaddon.Addon().getSetting('lineup')
+        device = xbmcaddon.Addon().getSetting('device')
         if zipcode == '' or lineup == '':
             zipConfig = dialog.yesno('No Lineup Configured!', 'You need to configure your lineup location before running zap2epg.', '', 'Would you like to setup your lineup?')
             if zipConfig:
