@@ -176,7 +176,8 @@ def location():
         zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
     if not zipcodeNew:
         return
-    zipcodeNew =re.sub(' ', '', zipcodeNew)
+    zipcodeNew = re.sub(' ', '', zipcodeNew)
+    zipcodeNew = zipcodeNew.upper()
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
     if countryNew == 0:
         country = 'USA'
