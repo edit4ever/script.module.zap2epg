@@ -1,3 +1,6 @@
+v1.0.0 (2018-07-12)
+ - official stable release
+
 v0.7.4 (2018-01-20)
  - fix for channel configuration with digital cable lineups
 

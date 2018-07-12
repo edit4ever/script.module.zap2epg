@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="0.7.4" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="1.0.0" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,7 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
-      v0.7.4 - fix for channel configuration with digital cable lineups (2018-01-20)
+      v1.0.0 - official stable release (2018-07-12)
     </news>
     <assets>
         <icon>resources/icon.png</icon>
