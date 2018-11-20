@@ -38,7 +38,7 @@ do case "$1" in
      ;;
 
    -v | --version )
-     printf "1.0.x\n"
+     printf "1.1.x\n"
      ;;
 
    -c | --capabilities )

@@ -424,6 +424,7 @@ def mainRun(userdata):
             logging.exception('Exception: parseStations')
 
     def parseEpisodes(content):
+        CheckTBA = "Safe"
         try:
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
@@ -457,6 +458,11 @@ def mainRun(userdata):
                             schedule[skey][epkey]['epseries'] = episode.get('seriesId')
                             schedule[skey][epkey]['epimage'] = None
                             schedule[skey][epkey]['epfan'] = None
+                            if "TBA" in schedule[skey][epkey]['epshow']:
+                                CheckTBA = "Unsafe"
+                            elif schedule[skey][epkey]['eptitle']:
+                                if "TBA" in schedule[skey][epkey]['eptitle']:
+                                    CheckTBA = "Unsafe"
                 else:
                     episodes = station.get('events')
                     for episode in episodes:
@@ -485,8 +491,14 @@ def mainRun(userdata):
                         schedule[skey][epkey]['epseries'] = episode.get('seriesId')
                         schedule[skey][epkey]['epimage'] = None
                         schedule[skey][epkey]['epfan'] = None
+                        if "TBA" in schedule[skey][epkey]['epshow']:
+                            CheckTBA = "Unsafe"
+                        elif schedule[skey][epkey]['eptitle']:
+                            if "TBA" in schedule[skey][epkey]['eptitle']:
+                                CheckTBA = "Unsafe"
         except Exception as e:
             logging.exception('Exception: parseEpisodes')
+        return CheckTBA
 
     def parseXdetails():
         showList = []
@@ -551,7 +563,18 @@ def mainRun(userdata):
                                                         edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
                                                 except Exception as e:
                                                     logging.exception('Could not parse oad for: %s - %s', episode, e)
-
+                                                try:
+                                                    TBAcheck = airing.get('episodeTitle')
+                                                    if TBAcheck != '':
+                                                        if "TBA" in TBAcheck:
+                                                            try:
+                                                                os.remove(fileDir)
+                                                                logging.info('Deleting %s due to TBA listings', filename)
+                                                                showList.remove(edict['epseries'])
+                                                            except OSError, e:
+                                                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                                except Exception as e:
+                                                    logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
                                 else:
                                     logging.warn('Could not parse data for: %s - deleting file', filename)
                                     os.remove(fileDir)
@@ -736,7 +759,13 @@ def mainRun(userdata):
                     logging.info('Parsing %s', filename)
                     if count == 0:
                         parseStations(content)
-                    parseEpisodes(content)
+                    TBAcheck = parseEpisodes(content)
+                    if TBAcheck == "Unsafe":
+                        try:
+                            os.remove(fileDir)
+                            logging.info('Deleting %s due to TBA listings', filename)
+                        except OSError, e:
+                            logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                 except:
                     logging.warn('JSON file error for: %s - deleting file', filename)
                     os.remove(fileDir)

@@ -1,3 +1,6 @@
+v1.1.0 (2018-11-20)
+ - added ability to refresh TBA episode information
+
 v1.0.0 (2018-07-12)
  - official stable release
 
