@@ -48,7 +48,11 @@ msgctxt "#32014"
 msgid "Append Extra Details to Description"
 msgstr ""
 
-# 32015-32019 blank
+msgctxt "#32015"
+msgid "Number of Days to Delete Cache (re-download)"
+msgstr ""
+
+# 32016-32019 blank
 
 msgctxt "#32020"
 msgid "Include Episode Thumbnail"

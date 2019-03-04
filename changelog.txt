@@ -1,3 +1,6 @@
+v1.2.0 (2019-03-04)
+ - add option to refresh download cache days
+
 v1.1.0 (2018-11-20)
  - added ability to refresh TBA episode information
 

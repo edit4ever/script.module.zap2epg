@@ -2,6 +2,7 @@
 <settings>
   <category label="32011">
     <setting label="32012" type="slider" id="days" default="1" range="1,1,14" option="int"/>
+    <setting label="32015" type="slider" id="redays" default="1" range="0,1,14" option="int"/>
     <setting label="32013" type="bool" id="xdetails" default="false"/>
     <setting label="32014" type="bool" id="xdesc" default="true"/>
     <setting label="32020" type="enum" id="epicon" default="1" lvalues="32021|32022|32023"/>

@@ -63,6 +63,8 @@ def mainRun(userdata):
             device = settingsDict[setting]
         if setting == 'days':
             days = settingsDict[setting]
+        if setting == 'redays':
+            redays = settingsDict[setting]
         if setting == 'xdetails':
             xdetails = settingsDict[setting]
         if setting == 'xdesc':
@@ -125,7 +127,7 @@ def mainRun(userdata):
             logging.exception('Exception: tvhMatch - %s', e.strerror)
             pass
 
-    def deleteOldCache(gridtimeStart, showList):
+    def deleteOldCache(gridtimeStart):
         logging.info('Checking for old cache files...')
         try:
             if os.path.exists(cacheDir):
@@ -134,15 +136,7 @@ def mainRun(userdata):
                     oldfile = entry.split('.')[0]
                     if oldfile.isdigit():
                         fn = os.path.join(cacheDir, entry)
-                        if (int(oldfile) + 10800) < gridtimeStart:
-                            try:
-                                os.remove(fn)
-                                logging.info('Deleting old cache: %s', entry)
-                            except OSError, e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
-                    elif not oldfile.isdigit():
-                        fn = os.path.join(cacheDir, entry)
-                        if oldfile not in showList:
+                        if (int(oldfile)) < (gridtimeStart + (int(redays) * 86400)):
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
@@ -150,6 +144,24 @@ def mainRun(userdata):
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache - %s', e.strerror)
+
+    def deleteOldShowCache(showList):
+        logging.info('Checking for old show cache files...')
+        try:
+            if os.path.exists(cacheDir):
+                entries = os.listdir(cacheDir)
+                for entry in entries:
+                    oldfile = entry.split('.')[0]
+                    if not oldfile.isdigit():
+                        fn = os.path.join(cacheDir, entry)
+                        if oldfile not in showList:
+                            try:
+                                os.remove(fn)
+                                logging.info('Deleting old show cache: %s', entry)
+                            except OSError, e:
+                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+        except Exception as e:
+            logging.exception('Exception: deleteOldshowCache - %s', e.strerror)
 
     def convTime(t):
         return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))
@@ -739,6 +751,7 @@ def mainRun(userdata):
             logging.info('No channel list found - adding all stations!')
         if tvhoff == 'true' and tvhmatch == 'true':
             tvhMatchGet()
+        deleteOldCache(gridtimeStart)
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
@@ -776,7 +789,7 @@ def mainRun(userdata):
         else:
             showList = []
         xmltv()
-        deleteOldCache(gridtimeStart, showList)
+        deleteOldShowCache(showList)
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
