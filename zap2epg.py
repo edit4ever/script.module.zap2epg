@@ -530,7 +530,7 @@ def mainRun(userdata):
                                 retry = 3
                                 while retry > 0:
                                     logging.info('Downloading details data for: %s', EPseries)
-                                    url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
+                                    url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     try:
                                         URLcontent = urllib2.Request(url, data=data)
@@ -758,7 +758,7 @@ def mainRun(userdata):
             if not os.path.exists(fileDir):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+                    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
                     saveContent = urllib2.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:

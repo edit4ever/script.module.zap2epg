@@ -107,7 +107,7 @@ def create_cList():
                 if channelEnabled == True:
                     tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = urllib2.urlopen(url).read()
     contentDict = json.loads(content)
     stationDict = {}
@@ -181,13 +181,13 @@ def location():
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
     if countryNew == 0:
         country = 'USA'
-        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap'
+        url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap/en'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
         lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
         deviceX = ['-', '-', '-', '-', '-', '-', '-']
     if countryNew == 1:
         country = 'CAN'
-        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap'
+        url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap/en'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
         deviceX = ['-', '-', '-', '-', '-']

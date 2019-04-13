@@ -1,3 +1,6 @@
+v1.3.0 (2019-04-12)
+ - fix server issues for lineups
+ 
 v1.2.0 (2019-03-04)
  - add option to refresh download cache days
 
