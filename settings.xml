@@ -1,0 +1,37 @@
+<settings version="2">
+    <setting id="chmatch">true</setting>
+    <setting id="days">1</setting>
+    <setting id="desc01">10</setting>
+    <setting id="desc02">18</setting>
+    <setting id="desc03">6</setting>
+    <setting id="desc04">13</setting>
+    <setting id="desc05">6</setting>
+    <setting id="desc06">15</setting>
+    <setting id="desc07">2</setting>
+    <setting id="desc08">9</setting>
+    <setting id="desc09">2</setting>
+    <setting id="desc10">14</setting>
+    <setting id="desc11">6</setting>
+    <setting id="desc12">11</setting>
+    <setting id="desc13">6</setting>
+    <setting id="desc14">12</setting>
+    <setting id="desc15">6</setting>
+    <setting id="desc16">20</setting>
+    <setting id="desc17">6</setting>
+    <setting id="desc18">19</setting>
+    <setting id="desc19" default="true">0</setting>
+    <setting id="desc20" default="true">0</setting>
+    <setting id="epgenre">3</setting>
+    <setting id="epicon">1</setting>
+    <setting id="lineup">Local Over the Air Broadcast</setting>
+    <setting id="lineupcode">lineupId</setting>
+    <setting id="passw" default="true"></setting>
+    <setting id="slist"></setting>
+    <setting id="tvhmatch">false</setting>
+    <setting id="tvhport">9981</setting>
+    <setting id="tvhurl" default="true">127.0.0.1</setting>
+    <setting id="usern" default="true"></setting>
+    <setting id="xdesc">true</setting>
+    <setting id="xdetails">false</setting>
+    <setting id="zipcode">92101</setting>
+</settings>
