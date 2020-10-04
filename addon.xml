@@ -15,8 +15,8 @@
 
 Setup:
  1. Install the zap2epg addon in Kodi
- 2. Run the addon and setup your lineup
- 3. Configure your channel list (add channels to be downloaded)
+ 2. Run the addon and setup your lineup then 
+ 3. Configure your channel list (add channels to be downloaded).
  4. You can run the program from the addon as a test (not necessary)
  5. Setup the zap2epg grabber in tvheadend
  6. Enjoy your new EPG!</description>
@@ -29,7 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
-      v1.3.0 - fix server issues for lineups (2019-04-12)
+      v1.3.0 - fix server issues for lineups please (2019-04-12)
       v1.2.0 - add option to refresh download cache days (2019-03-04)
       v1.1.0 - added ability to refresh TBA episodes (2018-11-20)
       v1.0.0 - official stable release (2018-07-12)
