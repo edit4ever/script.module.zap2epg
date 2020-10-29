@@ -255,7 +255,7 @@ def mainRun(userdata):
     def printHeader(fh, enc):
         logging.info('Creating xmltv.xml file...')
         fh.write("<?xml version=\"1.0\" encoding=\""+ enc + "\"?>\n")
-        fh.write("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n")
+#        fh.write("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n")
         fh.write("<tv source-info-url=\"http://tvschedule.zap2it.com/\" source-info-name=\"zap2it.com\">\n")
 
     def printFooter(fh):
