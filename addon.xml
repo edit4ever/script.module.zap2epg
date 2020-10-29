@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="1.3.0" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="1.3.1" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="2.7.13"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,6 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
+      v1.3.1 - remove doctype error for TVH on OSMC
       v1.3.0 - fix server issues for lineups (2019-04-12)
       v1.2.0 - add option to refresh download cache days (2019-03-04)
       v1.1.0 - added ability to refresh TBA episodes (2018-11-20)
