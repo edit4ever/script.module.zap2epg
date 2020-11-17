@@ -17,13 +17,13 @@ import xbmc,xbmcaddon,xbmcvfs,xbmcgui,xbmcplugin
 import subprocess
 from subprocess import Popen
 from xbmcswift2 import Plugin
-import StringIO
+import io
 import os
 import re
 import sys
 import logging
 import zap2epg
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import json
 from collections import OrderedDict
 import time
@@ -97,7 +97,7 @@ def create_cList():
                     channels = response.json()
                     with open(tvhList,"w") as f:
                         json.dump(channels,f)
-                except urllib2.HTTPError as e:
+                except urllib.error.HTTPError as e:
                     logging.exception('Exception: tvhClist - %s', e.strerror)
                     pass
         with open(tvhList) as tvhData:
@@ -108,7 +108,7 @@ def create_cList():
                     tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-    content = urllib2.urlopen(url).read()
+    content = urllib.request.urlopen(url).read()
     contentDict = json.loads(content)
     stationDict = {}
     if 'channels' in contentDict:
@@ -121,7 +121,7 @@ def create_cList():
                 stationDict[skey]['include'] = 'True'
             else:
                 stationDict[skey]['include'] = 'False'
-    stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
+    stationDictSort = OrderedDict(sorted(iter(stationDict.items()), key=lambda i: (float(i[1]['num']))))
     with open(Clist,"w") as f:
         json.dump(stationDictSort,f)
 
@@ -139,7 +139,7 @@ def channels():
             create_cList()
     with open(Clist) as data:
         stationDict = json.load(data)
-    stationDict = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
+    stationDict = OrderedDict(sorted(iter(stationDict.items()), key=lambda i: (float(i[1]['num']))))
     stationCode = []
     stationListName = []
     stationListNum = []
@@ -150,7 +150,7 @@ def channels():
         stationListNum.append(stationDict[station]['num'])
         stationListInclude.append(stationDict[station]['include'])
     stationPre = [i for i, x in enumerate(stationListInclude) if x == 'True']
-    stationListFull = zip(stationListNum, stationListName)
+    stationListFull = list(zip(stationListNum, stationListName))
     stationList = ["%s %s" % x for x in stationListFull]
     selCh = dialog.multiselect('Click to Select Channels to Include', stationList, preselect=stationPre)
     for station in stationDict:
@@ -191,7 +191,7 @@ def location():
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
         deviceX = ['-', '-', '-', '-', '-']
-    content = urllib2.urlopen(url).read()
+    content = urllib.request.urlopen(url).read()
     lineupDict = json.loads(content)
     if 'Providers' in lineupDict:
         for provider in lineupDict['Providers']:
@@ -253,25 +253,25 @@ def index():
     items.append(
     {
         'label': 'Run zap2epg and Update Guide Data',
-        'path': plugin.url_for(u'run'),
+        'path': plugin.url_for('run'),
         'thumbnail':get_icon_path('run'),
     })
     items.append(
     {
         'label': 'Change Current Location | Zipcode: ' + zipcode + ' &  Lineup: ' + lineup,
-        'path': plugin.url_for(u'location'),
+        'path': plugin.url_for('location'),
         'thumbnail':get_icon_path('antenna'),
     })
     items.append(
     {
         'label': 'Configure Channel List',
-        'path': plugin.url_for(u'channels'),
+        'path': plugin.url_for('channels'),
         'thumbnail':get_icon_path('channel'),
     })
     items.append(
     {
         'label': 'Configure Settings and Options',
-        'path': plugin.url_for(u'open_settings'),
+        'path': plugin.url_for('open_settings'),
         'thumbnail':get_icon_path('settings'),
     })
     return items

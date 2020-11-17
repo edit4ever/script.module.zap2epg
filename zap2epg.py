@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import base64
 import codecs
 import time
@@ -110,11 +110,11 @@ def mainRun(userdata):
         channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
         if usern is not None and passw is not None:
             logging.info('Adding Tvheadend username and password to request url...')
-            request = urllib2.Request(channels_url)
+            request = urllib.request.Request(channels_url)
             request.add_header('Authorization', b'Basic ' + base64.b64encode(usern + b':' + passw))
-            response = urllib2.urlopen(request)
+            response = urllib.request.urlopen(request)
         else:
-            response = urllib2.urlopen(channels_url)
+            response = urllib.request.urlopen(channels_url)
         try:
             logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
             channels = json.load(response)
@@ -123,7 +123,7 @@ def mainRun(userdata):
                 channelNum = ch['number']
                 tvhMatchDict[channelNum] = channelName
             logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
             logging.exception('Exception: tvhMatch - %s', e.strerror)
             pass
 
@@ -140,7 +140,7 @@ def mainRun(userdata):
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
-                            except OSError, e:
+                            except OSError as e:
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache - %s', e.strerror)
@@ -158,7 +158,7 @@ def mainRun(userdata):
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old show cache: %s', entry)
-                            except OSError, e:
+                            except OSError as e:
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldshowCache - %s', e.strerror)
@@ -267,9 +267,9 @@ def mainRun(userdata):
         try:
             logging.info('Writing Stations to xmltv.xml file...')
             try:
-                scheduleSort = OrderedDict(sorted(schedule.iteritems(), key=lambda x: int(x[1]['chnum'])))
+                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: int(x[1]['chnum'])))
             except:
-                scheduleSort = OrderedDict(sorted(schedule.iteritems(), key=lambda x: x[1]['chfcc']))
+                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: x[1]['chfcc']))
             for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
                 if 'chtvh' in scheduleSort[station] and scheduleSort[station]['chtvh'] is not None:
@@ -533,8 +533,8 @@ def mainRun(userdata):
                                     url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     try:
-                                        URLcontent = urllib2.Request(url, data=data)
-                                        JSONcontent = urllib2.urlopen(URLcontent).read()
+                                        URLcontent = urllib.request.Request(url, data=data)
+                                        JSONcontent = urllib.request.urlopen(URLcontent).read()
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
@@ -544,7 +544,7 @@ def mainRun(userdata):
                                             time.sleep(1)
                                             retry -= 1
                                             logging.warn('Retry downloading missing details data for: %s', EPseries)
-                                    except urllib2.URLError, e:
+                                    except urllib.error.URLError as e:
                                         time.sleep(1)
                                         retry -= 1
                                         logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
@@ -583,7 +583,7 @@ def mainRun(userdata):
                                                                 os.remove(fileDir)
                                                                 logging.info('Deleting %s due to TBA listings', filename)
                                                                 showList.remove(edict['epseries'])
-                                                            except OSError, e:
+                                                            except OSError as e:
                                                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                                                 except Exception as e:
                                                     logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
@@ -616,14 +616,14 @@ def mainRun(userdata):
             prog = ""
             plot= ""
             descsort = ""
-            bullet = u"\u2022 "
-            hyphen = u"\u2013 "
+            bullet = "\u2022 "
+            hyphen = "\u2013 "
             newLine = "\n"
             space = " "
-            colon = u"\u003A "
-            vbar = u"\u007C "
-            slash = u"\u2215 "
-            comma = u"\u002C "
+            colon = "\u003A "
+            vbar = "\u007C "
+            slash = "\u2215 "
+            comma = "\u002C "
 
             def getSortName(opt):
                 return {
@@ -759,7 +759,7 @@ def mainRun(userdata):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
                     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-                    saveContent = urllib2.urlopen(url).read()
+                    saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
@@ -777,7 +777,7 @@ def mainRun(userdata):
                         try:
                             os.remove(fileDir)
                             logging.info('Deleting %s due to TBA listings', filename)
-                        except OSError, e:
+                        except OSError as e:
                             logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                 except:
                     logging.warn('JSON file error for: %s - deleting file', filename)
