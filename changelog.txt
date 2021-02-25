@@ -1,3 +1,6 @@
+v2.0.1 (2021-02-25)
+ - Kodi 19 dialog fix
+
 v2.0.0 (2020-10-27)
  - Python3 update
 
