@@ -5,6 +5,7 @@
   <setting id="device">-</setting>
   <setting id="days">1</setting>
   <setting id="slist"></setting>
+  <setting id="stitle">false</setting>
   <setting id="xdetails">false</setting>
   <setting id="xdesc">true</setting>
   <setting id="epgenre">3</setting>

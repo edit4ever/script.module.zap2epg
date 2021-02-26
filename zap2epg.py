@@ -87,6 +87,8 @@ def mainRun(userdata):
             chmatch = settingsDict[setting]
         if setting == 'tvhmatch':
             tvhmatch = settingsDict[setting]
+        if setting == 'stitle':
+            stitle = settingsDict[setting]
         if setting.startswith('desc'):
             xdescOrderDict[setting] = (settingsDict[setting])
     xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
@@ -319,7 +321,12 @@ def mainRun(userdata):
                                 if edict['epshow'] is not None:
                                     fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
                                 if edict['eptitle'] is not None:
-                                    fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
+                                    showTitle = re.sub('&','&amp;', edict['epshow'])
+                                    if stitle == "true":
+                                        safeTitle = re.sub('[\\/*?:"<>|]', "_", showTitle)
+                                        fh.write('\t\t<title lang=\"' + lang + '\">' + safeTitle + '</title>\n')
+                                    else:
+                                        fh.write('\t\t<title lang=\"' + lang + '\">' + showTitle + '</title>\n')
                                 if xdesc == 'true':
                                     xdescSort = addXDetails(edict)
                                     fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
