@@ -4,6 +4,7 @@
   <setting id="lineup">Local Over the Air Broadcast</setting>
   <setting id="device">-</setting>
   <setting id="days">1</setting>
+  <setting id="redays">1</setting>
   <setting id="slist"></setting>
   <setting id="xdetails">false</setting>
   <setting id="xdesc">true</setting>

@@ -1,3 +1,6 @@
+v2.0.2 (2021-03-29)
+ - fix Tvheadend username and password option
+
 v2.0.1 (2021-02-25)
  - Kodi 19 dialog fix
 

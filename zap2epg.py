@@ -111,9 +111,9 @@ def mainRun(userdata):
         if usern is not None and passw is not None:
             logging.info('Adding Tvheadend username and password to request url...')
             request = urllib.request.Request(channels_url)
-            tvhheader = usern + ':' + passw
-            tvhheader_encode = 'Basic ' + base64.b64encode(tvhheader.encode()))
-            request.add_header('Authorization', b(tvhheader_encode))
+            userpass = (usern + ':' + passw)
+            userpass_enc = base64.b64encode(userpass.encode('utf-8'))
+            request.add_header('Authorization', b'Basic ' + userpass_enc)
             response = urllib.request.urlopen(request)
         else:
             response = urllib.request.urlopen(channels_url)
