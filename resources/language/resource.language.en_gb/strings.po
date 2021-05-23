@@ -52,7 +52,11 @@ msgctxt "#32015"
 msgid "Number of Days to Delete Cache (re-download)"
 msgstr ""
 
-# 32016-32019 blank
+msgctxt "#32016"
+msgid "Create Windows Safe Titles"
+msgstr ""
+
+# 32017-32019 blank
 
 msgctxt "#32020"
 msgid "Include Episode Thumbnail"

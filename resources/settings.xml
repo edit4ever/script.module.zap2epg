@@ -7,6 +7,7 @@
     <setting label="32014" type="bool" id="xdesc" default="true"/>
     <setting label="32020" type="enum" id="epicon" default="1" lvalues="32021|32022|32023"/>
     <setting label="32030" type="enum" id="epgenre" default="2" lvalues="32031|32032|32033|32034"/>
+    <setting label="32016" type="bool" id="stitle" default="false"/>
   </category>
   <category label="32200">
     <setting label="32201" type="lsep" />
