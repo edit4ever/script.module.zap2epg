@@ -541,8 +541,9 @@ def mainRun(userdata):
                                     logging.info('Downloading details data for: %s', EPseries)
                                     url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
+                                    data_encode = data.encode('utf-8')
                                     try:
-                                        URLcontent = urllib.request.Request(url, data=data)
+                                        URLcontent = urllib.request.Request(url, data=data_encode)
                                         JSONcontent = urllib.request.urlopen(URLcontent).read()
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
