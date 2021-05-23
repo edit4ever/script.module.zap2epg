@@ -156,7 +156,7 @@ def channels():
     for station in stationDict:
         stationDict[station]['include'] = 'False'
     stationListCodes = []
-    if selCh >= 0:
+    if selCh:
         for channel in selCh:
             skey = stationCode[channel]
             stationDict[skey]['include'] = 'True'

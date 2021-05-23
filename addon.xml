@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="2.0.2" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="2.0.3" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -29,6 +29,7 @@ Setup:
     <email></email>
     <source></source>
     <news>
+      v2.0.3 - fix channel configuration error (2021-05-23)
       v2.0.2 - fix Tvheadend username and password option (2021-03-29)
       v2.0.1 - Kodi 19 dialog fix (2021-02-25)
       v2.0.0 - Python 3 update (2020-10-27)

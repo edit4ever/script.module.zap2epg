@@ -1,3 +1,6 @@
+v2.0.3 (2021-05-23)
+ - fix channel configuration error
+
 v2.0.2 (2021-03-29)
  - fix Tvheadend username and password option
 
