@@ -371,8 +371,11 @@ def mainRun(userdata):
                                 if epgenre != '0':
                                     if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
-                                        for genre in genreNewList:
-                                            fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                                    elif edict['epfilter'] is not None:
+                                        genreNewList = edict['epfilter']
+                                    if genreNewList is not "":
+                                        for category in genreNewList:
+                                            fh.write("\t\t<category lang=\"" + lang + "\">" + category.replace('filter-','') + "</category>\n")
                                 fh.write("\t</programme>\n")
                                 episodeCount += 1
                         except Exception as e:
