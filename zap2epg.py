@@ -168,6 +168,14 @@ def mainRun(userdata):
     def convTime(t):
         return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))
 
+    def convHTML(data):
+        data = data.replace('&','&amp;')
+        data = data.replace('"','&quot;')
+        data = data.replace("'",'&apos;')
+        data = data.replace('<','&lt;')
+        data = data.replace('>','&gt;')
+        return data;
+
     def savepage(fn, data):
         if not os.path.exists(cacheDir):
             os.mkdir(cacheDir)
@@ -275,17 +283,17 @@ def mainRun(userdata):
             for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
                 if 'chtvh' in scheduleSort[station] and scheduleSort[station]['chtvh'] is not None:
-                    xchtvh = re.sub('&','&amp;',scheduleSort[station]['chtvh'])
+                    xchtvh = convHTML(scheduleSort[station]['chtvh'])
                     fh.write('\t\t<display-name>' + xchtvh + '</display-name>\n')
                 if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     xchfcc = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + xchnum + ' ' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
-                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + xchnum + ' ' + convHTML(xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + convHTML(xchfcc) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xcfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + convHTML(xcfcc) + '</display-name>\n')
                 elif 'chnum' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
@@ -319,15 +327,15 @@ def mainRun(userdata):
                                 dd_progid = edict['epid']
                                 fh.write('\t\t<episode-num system=\"dd_progid\">' + dd_progid[:-4] + '.' + dd_progid[-4:] + '</episode-num>\n')
                                 if edict['epshow'] is not None:
-                                    fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
+                                    fh.write('\t\t<title lang=\"' + lang + '\">' + convHTML(edict['epshow']) + '</title>\n')
                                 if edict['eptitle'] is not None:
-                                    fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
+                                    fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + convHTML(edict['eptitle']) + '</sub-title>\n')
                                 if xdesc == 'true':
                                     xdescSort = addXDetails(edict)
-                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
+                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + convHTML(xdescSort) + '</desc>\n')
                                 if xdesc == 'false':
                                     if edict['epdesc'] is not None:
-                                        fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
+                                        fh.write('\t\t<desc lang=\"' + lang + '\">' + convHTML(edict['epdesc']) + '</desc>\n')
                                 if edict['epsn'] is not None and edict['epen'] is not None:
                                     fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
                                     fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
