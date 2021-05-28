@@ -176,6 +176,11 @@ def mainRun(userdata):
         data = data.replace('>','&gt;')
         return data;
 
+    def convTitleExcept(data):
+        exception = "CTV CW HD ION ION: NHK PBS TV TVA"
+        data = " ".join([word.title() if word not in exception else word for word in data.split(" ")])
+        return data;
+
     def savepage(fn, data):
         if not os.path.exists(cacheDir):
             os.mkdir(cacheDir)
@@ -288,7 +293,9 @@ def mainRun(userdata):
                 if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     xchfcc = scheduleSort[station]['chfcc']
+                    xchnam = scheduleSort[station]['chnam']
                     fh.write('\t\t<display-name>' + xchnum + ' ' + convHTML(xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + convTitleExcept(xchnam) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + convHTML(xchfcc) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
@@ -416,12 +423,14 @@ def mainRun(userdata):
                 if stationList is not None:
                     if skey in stationList:
                         schedule[skey] = {}
-                        chName = station.get('callSign')
-                        schedule[skey]['chfcc'] = chName
+                        chSign = station.get('callSign')
+                        chName = station.get('affiliateName')
+                        schedule[skey]['chfcc'] = chSign
+                        schedule[skey]['chnam'] = chName
                         schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
                         chnumStart = station.get('channelNo')
-                        if '.' not in chnumStart and chmatch == 'true' and chName is not None:
-                            chsub = re.search('(\d+)$', chName)
+                        if '.' not in chnumStart and chmatch == 'true' and chSign is not None:
+                            chsub = re.search('(\d+)$', chSign)
                             if chsub is not None:
                                 chnumUpdate = chnumStart + '.' + chsub.group(0)
                             else:
@@ -436,12 +445,14 @@ def mainRun(userdata):
                                 schedule[skey]['chtvh'] = None
                 else:
                     schedule[skey] = {}
-                    chName = station.get('callSign')
-                    schedule[skey]['chfcc'] = chName
+                    chSign = station.get('callSign')
+                    chName = station.get('affiliateName')
+                    schedule[skey]['chfcc'] = chSign
+                    schedule[skey]['chnam'] = chName
                     schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
                     chnumStart = station.get('channelNo')
-                    if '.' not in chnumStart and chmatch == 'true' and chName is not None:
-                        chsub = re.search('(\d+)$', chName)
+                    if '.' not in chnumStart and chmatch == 'true' and chSign is not None:
+                        chsub = re.search('(\d+)$', chSign)
                         if chsub is not None:
                             chnumUpdate = chnumStart + '.' + chsub.group(0)
                         else:
