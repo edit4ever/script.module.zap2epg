@@ -295,7 +295,8 @@ def mainRun(userdata):
                     xchfcc = scheduleSort[station]['chfcc']
                     xchnam = scheduleSort[station]['chnam']
                     fh.write('\t\t<display-name>' + xchnum + ' ' + convHTML(xchfcc) + '</display-name>\n')
-                    fh.write('\t\t<display-name>' + convTitleExcept(xchnam) + '</display-name>\n')
+                    if xchnam != "INDEPENDENT":
+                        fh.write('\t\t<display-name>' + convTitleExcept(xchnam) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + convHTML(xchfcc) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
