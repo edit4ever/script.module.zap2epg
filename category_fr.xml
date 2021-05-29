@@ -1,0 +1,115 @@
+<!--Ref: https://tvheadend.org/boards/12/topics/9892?r=26317-->
+<!--Ref: https://www.etsi.org/deliver/etsi_en/300400_300499/300468/01.16.01_60/en_300468v011601p.pdf p54-56-->
+<etsi version="1.16.1" lang="fr_CA">
+  <content level1="0x1" name="Movie/Drama">
+    <nibble level2="default">movie</nibble>
+    <nibble level2="0x0">movie/drama</nibble>
+    <nibble level2="0x1">detective/thriller</nibble>
+    <nibble level2="0x2">adventure/western/war"</nibble>
+    <nibble level2="0x3">science fiction/fantasy/horror"</nibble>
+    <nibble level2="0x4">comedy</nibble>
+    <nibble level2="0x5">soap/melodrama/folkloric</nibble>
+    <nibble level2="0x6">romance</nibble>
+    <nibble level2="0x7">serious/classical/religious/historical movie/drama</nibble>
+    <nibble level2="0x8">adult movie/drama</nibble>
+  </content>
+  <content level1="0x2" name="News/Current affairs">
+    <nibble level2="default">news</nibble>
+    <nibble level2="0x0">news/current affairs</nibble>
+    <nibble level2="0x1">news/weather report</nibble>
+    <nibble level2="0x2">news magazine</nibble>
+    <nibble level2="0x3">documentary</nibble>
+    <nibble level2="0x4">discussion/interview/debate</nibble>
+  </content>
+  <content level1="0x3" name="Show/Game show">
+    <nibble level2="default">talk</nibble>
+    <nibble level2="0x0">show/game show</nibble>
+    <nibble level2="0x1">game show/quiz/contest</nibble>
+    <nibble level2="0x2">variety show</nibble>
+    <nibble level2="0x3">talk show</nibble>
+  </content>
+  <content level1="0x4" name="Sports">
+    <nibble level2="default">sports</nibble>
+    <nibble level2="0x0">sports</nibble>
+    <nibble level2="0x1">special events (Olympic Games, World Cup, etc.)</nibble>
+    <nibble level2="0x2">sports magazines</nibble>
+    <nibble level2="0x3">football/soccer</nibble>
+    <nibble level2="0x4">tennis/squash</nibble>
+    <nibble level2="0x5">team sports (excluding football)</nibble>
+    <nibble level2="0x6">athletics</nibble>
+    <nibble level2="0x7">motor sport</nibble>
+    <nibble level2="0x8">water sport</nibble>
+    <nibble level2="0x9">winter sports</nibble>
+    <nibble level2="0xA">equestrian</nibble>
+    <nibble level2="0xB">martial sports</nibble>
+  </content>
+  <content level1="0x5" name="Children's/Youth programmes">
+    <nibble level2="default">family</nibble>
+    <nibble level2="0x0">children's/youth programmes</nibble>
+    <nibble level2="0x1">pre-school children's programmes</nibble>
+    <nibble level2="0x2">entertainment programmes for 6 to 14</nibble>
+    <nibble level2="0x3">entertainment programmes for 10 to 16</nibble>
+    <nibble level2="0x4">informational/educational/school programmes</nibble>
+    <nibble level2="0x5">cartoons/puppets</nibble>
+  </content>
+  <content level1="0x6" name="Music/Ballet/Dance">
+    <nibble level2="0x0">music/ballet/dance</nibble>
+    <nibble level2="0x1">rock/pop</nibble>
+    <nibble level2="0x2">serious music/classical music</nibble>
+    <nibble level2="0x3">folk/traditional music</nibble>
+    <nibble level2="0x4">jazz</nibble>
+    <nibble level2="0x5">musical/opera</nibble>
+    <nibble level2="0x6">ballet</nibble>
+  </content>
+  <content level1="0x7" name="Arts/Culture (without music)">
+    <nibble level2="0x0">arts/culture (without music)</nibble>
+    <nibble level2="0x1">performing arts</nibble>
+    <nibble level2="0x2">fine arts</nibble>
+    <nibble level2="0x3">religion</nibble>
+    <nibble level2="0x4">popular culture/traditional arts</nibble>
+    <nibble level2="0x5">literature</nibble>
+    <nibble level2="0x6">film/cinema</nibble>
+    <nibble level2="0x7">experimental film/video</nibble>
+    <nibble level2="0x8">broadcasting/press</nibble>
+    <nibble level2="0x9">new media</nibble>
+    <nibble level2="0xA">arts/culture magazines</nibble>
+    <nibble level2="0xB">fashion</nibble>
+  </content>
+  <content level1="0x8" name="Social/Political issues/Economics">
+    <nibble level2="0x0">social/political issues/economics</nibble>
+    <nibble level2="0x1">magazines/reports/documentary</nibble>
+    <nibble level2="0x2">economics/social advisory</nibble>
+    <nibble level2="0x3">remarkable people</nibble>
+  </content>
+  <content level1="0x9" name="Education/Science/Factual topics">
+    <nibble level2="0x0">education/science/factual topics</nibble>
+    <nibble level2="0x1">nature/animals/environment</nibble>
+    <nibble level2="0x2">technology/natural sciences</nibble>
+    <nibble level2="0x3">medicine/physiology/psychology</nibble>
+    <nibble level2="0x4">foreign countries/expeditions</nibble>
+    <nibble level2="0x5">social/spiritual sciences</nibble>
+    <nibble level2="0x6">further education</nibble>
+    <nibble level2="0x7">languages</nibble>
+  </content>
+  <content level1="0xA" name="Leisure hobbies">
+    <nibble level2="0x0">leisure hobbies</nibble>
+    <nibble level2="0x1">tourism/travel</nibble>
+    <nibble level2="0x2">handicraft</nibble>
+    <nibble level2="0x3">motoring</nibble>
+    <nibble level2="0x4">fitness and health</nibble>
+    <nibble level2="0x5">cooking</nibble>
+    <nibble level2="0x6">advertisement/shopping</nibble>
+    <nibble level2="0x7">gardening</nibble>
+  </content>
+  <content level1="0xB" name="Special characteristics">
+    <nibble level2="0x0">original language</nibble>
+    <nibble level2="0x1">black and white</nibble>
+    <nibble level2="0x2">unpublished</nibble>
+    <nibble level2="0x3">live broadcast</nibble>
+    <nibble level2="0x4">plano-stereoscopic</nibble>
+    <nibble level2="0x5">local or regional</nibble>
+  </content>
+  <content level1="0xC" name="Adult">
+    <nibble level2="0x0">adult</nibble>
+  </content>
+</etsi>
