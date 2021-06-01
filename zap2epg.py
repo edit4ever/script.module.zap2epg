@@ -553,6 +553,16 @@ def mainRun(userdata):
             logging.exception('Exception: parseEpisodes')
         return CheckTBA
 
+    def genShowList():
+        showList = []
+        for station in schedule:
+            sdict = schedule[station]
+            for episode in sdict:
+                if not episode.startswith("ch"):
+                    edict = sdict[episode]
+                    showList.append(edict['epseries'])
+        return showList
+
     def parseXdetails():
         showList = []
         failList = []
@@ -640,7 +650,6 @@ def mainRun(userdata):
                             #os.remove(fileDir)
         except Exception as e:
             logging.exception('Exception: parseXdetails')
-        return showList
 
     def addXDetails(edict):
         try:
@@ -826,12 +835,11 @@ def mainRun(userdata):
                     os.remove(fileDir)
             count += 1
             gridtime = gridtime + 10800
-        if xdetails == 'true':
-            showList = parseXdetails()
-        else:
-            showList = []
-        xmltv()
+        showList = genShowList()
         deleteOldShowCache(showList)
+        if xdetails == 'true':
+            parseXdetails()
+        xmltv()
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
