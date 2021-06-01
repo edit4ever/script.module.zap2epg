@@ -343,6 +343,8 @@ def mainRun(userdata):
                                 if xdesc == 'false':
                                     if edict['epdesc'] is not None:
                                         fh.write('\t\t<desc lang=\"' + lang + '\">' + convHTML(edict['epdesc']) + '</desc>\n')
+                                if edict['eplength'] is not None:
+                                    fh.write('\t\t<length units="minutes">' + edict['eplength'] + '</length>\n')
                                 if edict['epsn'] is not None and edict['epen'] is not None:
                                     fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
                                     fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
