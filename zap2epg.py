@@ -341,7 +341,7 @@ def mainRun(userdata):
                                 if edict['eptitle'] is not None:
                                     showTitle = convHTML(edict['epshow'])
                                     if stitle == "true":
-                                        safeTitle = re.sub('[\\/*?:"<>|]', "_", showTitle)
+                                        safeTitle = re.sub('[\\/*?:|]', "_", showTitle)
                                         fh.write('\t\t<title lang=\"' + lang + '\">' + safeTitle + '</title>\n')
                                     else:
                                         fh.write('\t\t<title lang=\"' + lang + '\">' + showTitle + '</title>\n')
