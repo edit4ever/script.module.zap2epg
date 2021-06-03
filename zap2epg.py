@@ -747,7 +747,7 @@ def mainRun(userdata):
                 finalDate = re.sub('%', ',', finalDate)
                 date = "First aired: " + finalDate + space
             if edict['epyear'] is not None:
-                myear = "Released: " + edict['epyear'] + space
+                myear = edict['epyear'] + space
             if edict['eprating'] is not None:
                 ratings = edict['eprating'] + space
             if edict['eptags'] != []:
@@ -757,9 +757,9 @@ def mainRun(userdata):
                 #hd = edict['ephd'] + space
             if edict['epsn'] is not None and edict['epen'] is not None:
                 s = re.sub('S', '', edict['epsn'])
-                sf = "Season " + str(int(s))
+                sf = "S" + str(int(s))
                 e = re.sub('E', '', edict['epen'])
-                ef = "Episode " + str(int(e))
+                ef = "E" + str(int(e))
                 season = sf + " - " + ef + space
             if edict['epshow'] is not None:
                 prog = edict['epshow'] + space
