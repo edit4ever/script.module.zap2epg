@@ -392,6 +392,15 @@ def mainRun(userdata):
                                     fh.write('\t\t<rating>\n\t\t\t<value>' + edict['eprating'] + '</value>\n\t\t</rating>\n')
                                 if edict['epstar'] is not None:
                                     fh.write('\t\t<star-rating>\n\t\t\t<value>' + edict['epstar'] + '/4</value>\n\t\t</star-rating>\n')
+                                if edict['epcredits'] is not None:
+                                    fh.write("\t\t<credits>\n")
+                                    for c in edict['epcredits']:
+                                        if c['assetId'] is not None:
+                                            crole=c['role']
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + convHTML(c['characterName']) + '" src="https://zap2it.tmsimg.com/assets/' + c['assetId'] + '">' + convHTML(c['name']) + '</' + c['role'].lower() + '>\n')
+                                        else:
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + convHTML(c['characterName']) + '">' + convHTML(c['name']) + '</' + c['role'].lower() + '>\n')
+                                    fh.write("\t\t</credits>\n")
                                 if epgenre != '0':
                                     if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
