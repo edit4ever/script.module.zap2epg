@@ -1,6 +1,6 @@
 # zap2epg tv schedule grabber for kodi
 ################################################################################
-#   This program is free software: you can redistribute it and/or modify
+#    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
@@ -145,7 +145,7 @@ def mainRun(userdata):
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
                             except OSError as e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache - %s', e.strerror)
 
@@ -163,7 +163,7 @@ def mainRun(userdata):
                                 os.remove(fn)
                                 logging.info('Deleting old show cache: %s', entry)
                             except OSError as e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldshowCache - %s', e.strerror)
 
@@ -604,11 +604,11 @@ def mainRun(userdata):
                                         else:
                                             time.sleep(1)
                                             retry -= 1
-                                            logging.warn('Retry downloading missing details data for: %s', EPseries)
+                                            logging.warning('Retry downloading missing details data for: %s', EPseries)
                                     except urllib.error.URLError as e:
                                         time.sleep(1)
                                         retry -= 1
-                                        logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
+                                        logging.warning('Retry downloading details data for: %s  -  %s', EPseries, e)
                             if os.path.exists(fileDir):
                                 fileSize = os.path.getsize(fileDir)
                                 if fileSize > 0:
@@ -645,14 +645,14 @@ def mainRun(userdata):
                                                                 logging.info('Deleting %s due to TBA listings', filename)
                                                                 showList.remove(edict['epseries'])
                                                             except OSError as e:
-                                                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                                                 except Exception as e:
                                                     logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
                                 else:
-                                    logging.warn('Could not parse data for: %s - deleting file', filename)
+                                    logging.warning('Could not parse data for: %s - deleting file', filename)
                                     os.remove(fileDir)
                             else:
-                                logging.warn('Could not download details data for: %s - skipping episode', episode)
+                                logging.warning('Could not download details data for: %s - skipping episode', episode)
                                 failList.append(EPseries)
                         except Exception as e:
                             logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
@@ -797,8 +797,8 @@ def mainRun(userdata):
                     saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
-                    logging.warn('Could not download guide data for: %s', str(gridtime))
-                    logging.warn('URL: %s', url)
+                    logging.warning('Could not download guide data for: %s', str(gridtime))
+                    logging.warning('URL: %s', url)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:
@@ -813,9 +813,9 @@ def mainRun(userdata):
                             os.remove(fileDir)
                             logging.info('Deleting %s due to TBA listings', filename)
                         except OSError as e:
-                            logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                            logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                 except:
-                    logging.warn('JSON file error for: %s - deleting file', filename)
+                    logging.warning('JSON file error for: %s - deleting file', filename)
                     os.remove(fileDir)
             count += 1
             gridtime = gridtime + 10800
