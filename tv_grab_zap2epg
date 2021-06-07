@@ -1,4 +1,5 @@
-# zap2epg tv schedule grabber for kodi
+#!/bin/bash
+# tv_grab_zap2epg zap2it.com TV schedule grabber for tvheadend
 ################################################################################
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,6 +15,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
+BaseDir="$HOME/var/epggrab"
+CacheDir="$BaseDir/cache"
+ConfDir="$BaseDir/conf"
+ConfFile="$ConfDir/zap2epg.xml"
+LogDir="$BaseDir/log"
+LogFile="$LogDir/zap2epg.log"
+XMLTV="$CacheDir/xmltv.xml"
+
+# Make needed variable accessible to python
+export CacheDir
+export ConfFile
+export LogFile
+export XMLTV
+
+zap2epg() {
+	read -r -d '' script <<-"----EOF"
 import urllib.request, urllib.error, urllib.parse
 import base64
 import codecs
@@ -34,7 +51,7 @@ import hashlib
 
 
 def mainRun(userdata):
-    settingsFile = os.path.join(userdata, 'settings.xml')
+    settingsFile = os.path.join(userdata, os.environ.get('ConfFile'))
     settings = ET.parse(settingsFile)
     root = settings.getroot()
     settingsDict = {}
@@ -101,7 +118,7 @@ def mainRun(userdata):
         country = 'CAN'
     logging.info('Running zap2epg-2.0.1 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
-    cacheDir = os.path.join(userdata, 'cache')
+    cacheDir = os.path.join(userdata, os.environ.get('CacheDir'))
     dayHours = int(days) * 8 # set back to 8 when done testing
     gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
@@ -422,7 +439,7 @@ def mainRun(userdata):
     def xmltv():
         try:
             enc = 'utf-8'
-            outFile = os.path.join(userdata, 'xmltv.xml')
+            outFile = os.path.join(userdata, os.environ.get('XMLTV'))
             fh = codecs.open(outFile, 'w+b', encoding=enc)
             printHeader(fh, enc)
             printStations(fh)
@@ -833,6 +850,59 @@ def mainRun(userdata):
 
 if __name__ == '__main__':
     userdata = os.getcwd()
-    log = os.path.join(userdata, 'zap2epg.log')
+    log = os.path.join(userdata, os.environ.get('LogFile'))
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     mainRun(userdata)
+----EOF
+
+python3 -c "$script"
+}
+
+###
+### MAIN
+###
+
+if [ ! -f $ConfFile ]; then
+   echo "Configuration file missing: $ConfFile"
+   exit 1
+fi
+
+# Create working directories
+[ ! -d $CacheDir ] && mkdir -p $CacheDir
+[ ! -d $LogDir ] && mkdir -p $LogDir
+
+if [ $# -eq 0 ]
+then
+  zap2epg
+  if [ $? = 0 ]; then
+    cat $XMLTV
+    exit 0
+  else
+    exit 1
+  fi
+fi
+
+while [ $# -gt 0 ]
+do case "$1" in
+   -d | --description )
+     printf "tv_grab_zap2epg is zap2it.com grabber for USA-Canada\n"
+     ;;
+
+   -v | --version )
+     printf "3.0.x\n"
+     ;;
+
+   -c | --capabilities )
+     printf "baseline\n"
+     ;;
+
+    -* )
+      printf "unknown option: %s\n" "$1"
+      printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
+      exit 2
+      ;;
+
+esac; shift
+done
+
+exit 0
