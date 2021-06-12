@@ -15,7 +15,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-BaseDir="$HOME/var/epggrab"
+# Default path for RasbPi Kodi+TVH
+BaseDir="$HOME/script.module.zap2epg/epggrab"
+# If running on synology NAS assume TVH only
+[ "$(uname -a | grep -i synology)" ] && BaseDir="$HOME/var/epggrab"
+
 CacheDir="$BaseDir/cache"
 ConfDir="$BaseDir/conf"
 ConfFile="$ConfDir/zap2epg.xml"
