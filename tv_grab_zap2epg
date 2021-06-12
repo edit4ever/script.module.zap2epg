@@ -760,9 +760,9 @@ def mainRun(userdata):
                 is_dst = time.daylight and time.localtime().tm_isdst > 0
                 TZoffset = (time.altzone if is_dst else time.timezone)
                 origDate = int(edict['epoad']) + TZoffset
-                finalDate = datetime.datetime.fromtimestamp(origDate).strftime('%B %d%% %Y')
+                finalDate = datetime.datetime.fromtimestamp(origDate).strftime('%Y-%m-%d')
                 finalDate = re.sub('%', ',', finalDate)
-                date = "First aired: " + finalDate + space
+                date = "Premiere: " + finalDate + space
             if edict['epyear'] is not None:
                 myear = edict['epyear'] + space
             if edict['eprating'] is not None:
