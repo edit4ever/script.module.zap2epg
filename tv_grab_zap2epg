@@ -20,18 +20,14 @@ BaseDir="$HOME/script.module.zap2epg/epggrab"
 # If running on synology NAS assume TVH only
 [ "$(uname -a | grep -i synology)" ] && BaseDir="$HOME/var/epggrab"
 
+Quiet="false"
+DaysPattern='^[1-9]$|^1[0-4]$'
 CacheDir="$BaseDir/cache"
 ConfDir="$BaseDir/conf"
 ConfFile="$ConfDir/zap2epg.xml"
 LogDir="$BaseDir/log"
 LogFile="$LogDir/zap2epg.log"
 XMLTV="$CacheDir/xmltv.xml"
-
-# Make needed variable accessible to python
-export CacheDir
-export ConfFile
-export LogFile
-export XMLTV
 
 zap2epg() {
 	read -r -d '' script <<-"----EOF"
@@ -60,8 +56,9 @@ def mainRun(userdata):
     root = settings.getroot()
     settingsDict = {}
     xdescOrderDict = {}
+    logging.info('Running zap2epg-3.0')
     kodiVersion = root.attrib.get('version')
-    logging.info('Kodi settings version is: %s', kodiVersion)
+    logging.info('Kodi settings version: %s', kodiVersion)
     for setting in root.findall('setting'):
         if kodiVersion == '2':
             settingStr = setting.text
@@ -83,7 +80,10 @@ def mainRun(userdata):
         if setting == 'device':
             device = settingsDict[setting]
         if setting == 'days':
-            days = settingsDict[setting]
+            if "Days" in os.environ:
+                days = os.environ.get('Days')
+            else:
+                days = settingsDict[setting]
         if setting == 'redays':
             redays = settingsDict[setting]
         if setting == 'xdetails':
@@ -118,15 +118,32 @@ def mainRun(userdata):
         tvhmatch = 'false'
     if zipcode.isdigit():
         country = 'USA'
+        logging.info('\tCountry: United States of America [%s]', country)
+        logging.info('\tZIP code: %s', zipcode)
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-2.0.1 for zipcode: %s and lineup: %s', zipcode, lineup)
+        logging.info('\tCountry: Canada [%s]', country)
+        logging.info('\tPostal code: %s', zipcode)
+    if "Offset" in os.environ:
+        offset = float(os.environ.get('Offset'))
+    else:
+        offset = 0.0
     pythonStartTime = time.time()
-    cacheDir = os.path.join(userdata, os.environ.get('CacheDir'))
     dayHours = int(days) * 8 # set back to 8 when done testing
-    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
+    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))) + offset*86400)
+    cacheDir = os.path.join(userdata, os.environ.get('CacheDir'))
     schedule = {}
     tvhMatchDict = {}
+    logging.info('\tTV Guide duration: %s days', days)
+    if int(offset) > 1:
+        logging.info('\tTV Guide Start: %i [offset: %i days]', int(gridtimeStart), int(offset))
+    elif int(offset) == 1:
+        logging.info('\tTV Guide Start: %i [offset: %i day]', int(gridtimeStart), int(offset))
+    else:
+        logging.info('\tTV Guide Start: %i', int(gridtimeStart))
+    logging.info('\tLineup: %s', lineup)
+    logging.info('\tConfiguration file: %s', settingsFile)
+    logging.info('\tCaching directory path: %s', cacheDir)
 
     def tvhMatchGet():
         tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
@@ -866,47 +883,98 @@ python3 -c "$script"
 ### MAIN
 ###
 
+# Create working directories
+[ ! -d $CacheDir ] && mkdir -p $CacheDir
+[ ! -d $LogDir ] && mkdir -p $LogDir
+
+while [ $# -gt 0 ]; do
+   case "$1" in
+      -d | --description )
+        printf "tv_grab_zap2epg is zap2it.com grabber for USA-Canada\n"
+        ;;
+
+      -v | --version )
+        printf "3.0.x\n"
+        ;;
+
+      -c | --capabilities )
+        printf "baseline\n"
+        ;;
+
+      -q | --quiet )
+        Quiet="true"
+        ;;
+
+      -o | --output )
+        shift
+        XMLTV="$1"
+        ;;
+
+      -d | --days )
+        shift
+        Days="$1"
+        ;;
+
+      --offset )
+        shift
+        Offset="$1"
+        ;;
+
+      --config-file )
+        shift
+        ConfFile="$1"
+        ;;
+
+       -* )
+         printf "unknown option: %s\n" "$1"
+         printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
+         exit 2
+         ;;
+   esac
+   shift
+done
+
+# Check output path and ability to write
+if [[ ! -d $(dirname $XMLTV) ]]; then
+   echo "Output directory for [$(basename $XMLTV)] is inaccessible: $(dirname $XMLTV)"
+   exit 1
+elif [[ ! -w $(dirname $XMLTV) ]]; then
+   echo "Output directory for [$(basename $XMLTV)] is not write accessible: $(dirname $XMLTV)"
+   exit 1
+fi
+
+# Check that config file exists
 if [ ! -f $ConfFile ]; then
    echo "Configuration file missing: $ConfFile"
    exit 1
 fi
 
-# Create working directories
-[ ! -d $CacheDir ] && mkdir -p $CacheDir
-[ ! -d $LogDir ] && mkdir -p $LogDir
-
-if [ $# -eq 0 ]
-then
-  zap2epg
-  if [ $? = 0 ]; then
-    cat $XMLTV
-    exit 0
-  else
-    exit 1
-  fi
+# Check that offset parameter is either empty or match regex
+if [ "$Offset" ] && [[ ! "$Offset" =~ $DaysPattern ]]; then
+   echo "Parameter [--offset] unmatched: $Offset"
+   exit 1
 fi
 
-while [ $# -gt 0 ]
-do case "$1" in
-   -d | --description )
-     printf "tv_grab_zap2epg is zap2it.com grabber for USA-Canada\n"
-     ;;
+# Check that days parameter is either empty or match regex
+if [ "$Days" ] && [[ ! "$Days" =~ $DaysPattern ]]; then
+   echo "Parameter [--days] unmatched: $Days"
+   exit 1
+fi
 
-   -v | --version )
-     printf "3.0.x\n"
-     ;;
+# Make needed variable accessible to python
+export CacheDir
+export ConfFile
+export LogFile
+export XMLTV
+[ "$Days" ] && export Days
+[ "$Offset" ] && export Offset
 
-   -c | --capabilities )
-     printf "baseline\n"
-     ;;
-
-    -* )
-      printf "unknown option: %s\n" "$1"
-      printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
-      exit 2
-      ;;
-
-esac; shift
-done
+# Generate XMLTV file
+zap2epg
+if [ $? = 0 ]; then
+  [ ! "$Quiet" == "true" ] && cat $XMLTV
+else
+  exit 1
+fi
 
 exit 0
