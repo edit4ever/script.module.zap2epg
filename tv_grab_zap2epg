@@ -20,14 +20,22 @@ BaseDir="$HOME/script.module.zap2epg/epggrab"
 # If running on synology NAS assume TVH only
 [ "$(uname -a | grep -i synology)" ] && BaseDir="$HOME/var/epggrab"
 
-Quiet="false"
-DaysPattern='^[1-9]$|^1[0-4]$'
 CacheDir="$BaseDir/cache"
 ConfDir="$BaseDir/conf"
 ConfFile="$ConfDir/zap2epg.xml"
 LogDir="$BaseDir/log"
 LogFile="$LogDir/zap2epg.log"
 XMLTV="$CacheDir/xmltv.xml"
+#
+DaysPattern='^[1-9]$|^1[0-4]$'
+CACodePattern='^[A-Z][0-9][A-Z][ ]?[0-9][A-Z][0-9]$'
+USCodePattern='^[0-9]{5}$'
+#
+Quiet="false"
+ZipCode=""
+Country=""
+Offset=""
+Days=""
 
 zap2epg() {
 	read -r -d '' script <<-"----EOF"
@@ -72,7 +80,10 @@ def mainRun(userdata):
         if setting == 'slist':
             stationList = settingsDict[setting]
         if setting == 'zipcode':
-            zipcode = settingsDict[setting]
+            if "ZipCode" in os.environ:
+                zipcode = os.environ.get('ZipCode')
+            else:
+                zipcode = settingsDict[setting]
         if setting == 'lineup':
             lineup = settingsDict[setting]
         if setting == 'lineupcode':
@@ -925,11 +936,17 @@ while [ $# -gt 0 ]; do
         ConfFile="$1"
         ;;
 
-       -* )
-         printf "unknown option: %s\n" "$1"
-         printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
-         exit 2
-         ;;
+      --zip | --postal | --code )
+        shift
+        # Remove " " from postal code if any
+        ZipCode=$(echo ${1} | sed 's/ //g')
+        ;;
+
+      -* )
+        printf "unknown option: %s\n" "$1"
+        printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
+        exit 2
+        ;;
    esac
    shift
 done
@@ -961,6 +978,16 @@ if [ "$Days" ] && [[ ! "$Days" =~ $DaysPattern ]]; then
    exit 1
 fi
 
+# Check that Zip & Postal codes are either empty or match regex
+if [ "$ZipCode" ] && [[ "$ZipCode" =~ $CACodePattern ]]; then
+   Country="CAN"
+elif [ "$ZipCode" ] && [[ "$ZipCode" =~ $USCodePattern ]]; then
+   Country="USA"
+else
+   echo "Parameter [--zip|--postal|--code] unmatched: $ZipCode"
+   exit 1
+fi
+
 # Make needed variable accessible to python
 export CacheDir
 export ConfFile
@@ -968,6 +995,7 @@ export LogFile
 export XMLTV
 [ "$Days" ] && export Days
 [ "$Offset" ] && export Offset
+[ "$Country" ] && export ZipCode
 
 # Generate XMLTV file
 zap2epg
