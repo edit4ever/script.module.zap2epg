@@ -15,7 +15,16 @@ zap2epg is originally designed to be easily setup in Kodi for use as a grabber f
 ## Synology TVH server:
 1. Install `tv_grab_zap2epg` script addon in `/usr/local/bin`
 2. Install `zap2epg.xml` configuration file under tvheadend `epggrab/conf` directory such as `/var/packages/tvheadend/target/var/epggrab/conf`
-3. Manually adjust `zap2epg.xml` parameters as needed.
+3. Manually adjust `zap2epg.xml` configuration file as needed or use capabilities (see description below)
+
+To test `tv_grab_zap2epg` EPG grabber under Synology DSM:
+```
+$ sudo su -s /bin/bash sc-tvheadend -c '~/bin/tv_grab_zap2epg --capabilities'
+baseline
+$ sudo su -s /bin/bash sc-tvheadend -c '~/bin/tv_grab_zap2epg --days 14 --postal J3B1M4 --quiet'
+$ ls -la ~sc-tvheadend/var/epggrab/cache/xmltv.xml
+-rw-rw-rw- 1 sc-tvheadend tvheadend 16320858 Jun 13 07:43 /var/packages/tvheadend/target/var/epggrab/cache/xmltv.xml
+```
 
 ## Configuration options (`zap2epg.xml`)
 - `<setting id="zipcode">92101</setting>`: US Zip or Canada postal code

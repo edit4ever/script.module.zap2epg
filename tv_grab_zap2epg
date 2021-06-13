@@ -33,7 +33,6 @@ USCodePattern='^[0-9]{5}$'
 #
 Quiet="false"
 ZipCode=""
-Country=""
 Offset=""
 Days=""
 
@@ -902,14 +901,17 @@ while [ $# -gt 0 ]; do
    case "$1" in
       -d | --description )
         printf "tv_grab_zap2epg is zap2it.com grabber for USA-Canada\n"
+        exit 0
         ;;
 
       -v | --version )
-        printf "3.0.x\n"
+        printf "3.0\n"
+        exit 0
         ;;
 
       -c | --capabilities )
         printf "baseline\n"
+        exit 0
         ;;
 
       -q | --quiet )
@@ -979,11 +981,7 @@ if [ "$Days" ] && [[ ! "$Days" =~ $DaysPattern ]]; then
 fi
 
 # Check that Zip & Postal codes are either empty or match regex
-if [ "$ZipCode" ] && [[ "$ZipCode" =~ $CACodePattern ]]; then
-   Country="CAN"
-elif [ "$ZipCode" ] && [[ "$ZipCode" =~ $USCodePattern ]]; then
-   Country="USA"
-else
+if [ "$ZipCode" ] && [[ ! "$ZipCode" =~ $CACodePattern && ! "$ZipCode" =~ $USCodePattern ]]; then
    echo "Parameter [--zip|--postal|--code] unmatched: $ZipCode"
    exit 1
 fi
@@ -995,7 +993,7 @@ export LogFile
 export XMLTV
 [ "$Days" ] && export Days
 [ "$Offset" ] && export Offset
-[ "$Country" ] && export ZipCode
+[ "$ZipCode" ] && export ZipCode
 
 # Generate XMLTV file
 zap2epg
