@@ -834,16 +834,16 @@ def mainRun(userdata):
             tvhMatchGet()
         deleteOldCache(gridtimeStart)
         while count < dayHours:
-            filename = str(gridtime) + '.json.gz'
+            filename = str(int(gridtime)) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
             if not os.path.exists(fileDir):
                 try:
-                    logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+                    logging.info('Downloading guide data for: %i', int(gridtime))
+                    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(int(gridtime)) + '&pref=-&userId=-'
                     saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
-                    logging.warning('Could not download guide data for: %s', str(gridtime))
+                    logging.warning('Could not download guide data for: %i', int(gridtime))
                     logging.warning('URL: %s', url)
             if os.path.exists(fileDir):
                 try:
