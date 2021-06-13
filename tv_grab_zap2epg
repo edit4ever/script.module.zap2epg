@@ -55,7 +55,8 @@ from os.path import dirname
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import hashlib
-
+import requests
+from requests.auth import HTTPDigestAuth
 
 def mainRun(userdata):
     settingsFile = os.path.join(userdata, os.environ.get('ConfFile'))
@@ -159,17 +160,14 @@ def mainRun(userdata):
         tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
         channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
         if usern is not None and passw is not None:
-            logging.info('Adding Tvheadend username and password to request url...')
-            request = urllib.request.Request(channels_url)
-            userpass = (usern + ':' + passw)
-            userpass_enc = base64.b64encode(userpass.encode('utf-8'))
-            request.add_header('Authorization', b'Basic ' + userpass_enc)
-            response = urllib.request.urlopen(request)
+            logging.info('Tvheadend access using username and password...')
+            response = requests.get(channels_url, auth=HTTPDigestAuth(usern, passw))
         else:
-            response = urllib.request.urlopen(channels_url)
+            logging.info('Tvheadend anonymous access...')
+            response = requests.get(channels_url)
         try:
             logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
-            channels = json.load(response)
+            channels = response.json()
             for ch in channels['entries']:
                 channelName = ch['name']
                 channelNum = ch['number']
