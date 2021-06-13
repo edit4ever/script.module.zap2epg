@@ -38,5 +38,14 @@ zap2epg is originally designed to be easily setup in Kodi for use as a grabber f
 - `<setting id="tvhmatch">false</setting>`: 
 - `<setting id="chmatch">true</setting>`: 
 
+# `tv_grab_zap2epg`
+zap2epg TV guide grabber script provides `baseline` capabilities (ref: http://wiki.xmltv.org/index.php/XmltvCapabilities):
+- `--quiet`: Suppress all progress information. When --quiet is used, the grabber shall only print error-messages to stderr.
+- `--output FILENAME`: Redirect the xmltv output to the specified file. Otherwise output goes to stdout along with a copy under `epggrab/cache/xmltv.xml`.
+- `--days X`: Supply data for X days, limited to 14.
+- `--offset X`: Start with data for day today plus X days. The default is 0, today; 1 means start from tomorrow, etc.
+- `--config-file FILENAME`: The grabber shall read all configuration data from the specified file.  Otherwise uses default under `epggrab/conf/zap2epg.xml`
+It also provide the following "extra" capabilities:
+- `--zip` or `--postal` or `--code`: Allow can be used to pass US Zip or Canadian Postal code to be used by the grabber.
 
 * Note that zap2epg is a proof of concept and is for personal experimentation only. It is not meant to be used in a commercial product and its use is your own responsibiility.
