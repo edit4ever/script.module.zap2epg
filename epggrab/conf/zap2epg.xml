@@ -16,7 +16,7 @@
   <setting id="passw"></setting>
   <setting id="tvhurl">127.0.0.1</setting>
   <setting id="tvhport">9981</setting>
-  <setting id="tvhmatch">false</setting>
+  <setting id="tvhmatch">true</setting>
   <setting id="chmatch">true</setting>
   <setting id="desc01">10</setting>
   <setting id="desc02">18</setting>
