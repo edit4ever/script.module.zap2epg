@@ -900,7 +900,7 @@ python3 -c "$script"
 while [ $# -gt 0 ]; do
    case "$1" in
       -d | --description )
-        printf "tv_grab_zap2epg is zap2it.com grabber for USA-Canada\n"
+        printf "North America (tvlistings.zap2it.com using zap2epg)\n"
         exit 0
         ;;
 
