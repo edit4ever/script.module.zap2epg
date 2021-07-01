@@ -20,7 +20,7 @@ BaseDir="$HOME/script.module.zap2epg/epggrab"
 # If running on synology NAS assume TVH only
 [ "$(uname -a | grep -i synology)" ] && BaseDir="$HOME/var/epggrab"
 # If running on common linux under hts user
-[ "$(id hts)" ] && BaseDir="$HOME/zap2epg"
+[ "$(id hts 2>/dev/null)" ] && BaseDir="$HOME/zap2epg"
 
 CacheDir="$BaseDir/cache"
 ConfDir="$BaseDir/conf"
