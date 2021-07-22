@@ -286,8 +286,8 @@ def mainRun(userdata):
                     fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
-                    xchnum = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xcfcc) + '</display-name>\n')
+                    xchfcc = scheduleSort[station]['chfcc']
+                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
                 elif 'chnum' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
