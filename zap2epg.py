@@ -1,3 +1,4 @@
+
 # zap2epg tv schedule grabber for kodi
 ################################################################################
 #   This program is free software: you can redistribute it and/or modify
@@ -27,6 +28,8 @@ import logging
 import re
 import json
 import sys
+import html
+from html import escape
 from os.path import dirname
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -39,6 +42,88 @@ def mainRun(userdata):
     root = settings.getroot()
     settingsDict = {}
     xdescOrderDict = {}
+
+#### Language support for Genres (and make it easier to add Genres)
+    xLangGenres = { 
+        "Lang_en" :  
+                { "Level_2" :
+                    {  "Movies" : "Movie / Drama",
+                        "movie" : "Movie / Drama",
+                        "Movie" : "Movie / Drama",
+                        'News' : "News / Current affairs" ,
+                        'Game show' : "Game show / Quiz / Contest",
+                        'Law' : "Show / Game show",
+                        'Culture' : "Arts / Culture (without music)",
+                        'Art' :  "Arts / Culture (without music)",
+                        'Entertainment' : "Popular culture / Traditional Arts",
+                        'Politics'  :  "Social / Political issues / Economics",
+                        'Social'  :  "Social / Political issues / Economics",
+                        'Public affairs' :  "Social / Political issues / Economics",
+                        'Education' : "Education / Science / Factual topics",
+                        'How-to' : "Leisure hobbies",
+                        'Travel' : "Tourism / Travel",
+                        'Sitcom' : "Variety show",
+                        'Talk' : "Talk show",
+                        'Children' : "Children's / Youth programs",
+                        'Animated' :  "Cartoons / Puppets",
+                        'Music' : "Music / Ballet / Dance"
+                   }  
+                        ,
+                "Level_1" :  
+                    {  "Movies" : "Movie / Drama",
+                        "movie" : "Movie / Drama",
+                        "Movie" : "Movie / Drama",
+                        'News' : "News / Current affairs",
+                        'News magazine' : "News magazine",
+                        'Public affairs' : "News / Current affairs",
+                        'Interview' : "Discussion / Interview / Debate",
+                        'Game show' : "Game show / Quiz / Contest",
+                        'Talk' : "Talk show",
+                        'Sports' : "Sports",
+                        'sports' : "Sports",
+                        'Sitcom' : "Variety show",
+                        'Children' : "Children's / Youth programs"
+                    },
+                "Level_3" : 
+                    {   "None" : "None"
+                    } ,
+                "Level_0" : 
+                    {   "None" : "None"
+                    }
+
+                } ,
+        "Lang_fr" :  
+                {"Level_1" : 
+                    {  "Movies" : "fr_1_Movies",
+                        "movie" : "fr_1_movie",
+                        "Movie" : "fr_1_Movie"
+                    }  ,
+                "Level_2" : 
+                    {  "Movies"  : "fr_2_Movies",
+                        "movie" : "fr_2_movie",
+                        "Movie" : "fr_2_Movie"
+                    },
+                "Level_3" :
+                    {   "None" : "None"
+                    },
+                "Level_0" : 
+                    {   "None" : "None"
+                    }
+               }
+       }
+
+###  For finding Sports and determining Teams
+    xCompetitionSports=['Football' ,
+                        'Baseball'  ,
+                        'Hockey', 
+                        'Soccer' , 
+                        'Tennis' , 
+                        'Volleyball', 'Footvolley',
+                        'Boxing',
+                        'Auto racing', 
+                        'Mixed martial arts' ]
+    xSportsTeamSeparators=[' at ', ' vs. ']
+
     kodiVersion = root.attrib.get('version')
     logging.info('Kodi settings version is: %s', kodiVersion)
     for setting in root.findall('setting'):
@@ -99,7 +184,11 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-2.0.1 for zipcode: %s and lineup: %s', zipcode, lineup)
+
+###  DEFAULTING this to "en" for now and should add it as a settings when the Genre table gets populated with other languages
+    lang = 'en'
+
+    logging.info('Running zap2epg-2.0.4 for zipcode: %s and lineup: %s', zipcode, lineup)
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -145,7 +234,7 @@ def mainRun(userdata):
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
                             except OSError as e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldCache - %s', e.strerror)
 
@@ -163,7 +252,7 @@ def mainRun(userdata):
                                 os.remove(fn)
                                 logging.info('Deleting old show cache: %s', entry)
                             except OSError as e:
-                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
             logging.exception('Exception: deleteOldshowCache - %s', e.strerror)
 
@@ -180,77 +269,30 @@ def mainRun(userdata):
 
     def genreSort(EPfilter, EPgenre):
         genreList = []
-        if epgenre == '2':
-            # for f in EPfilter:
-            #     fClean = re.sub('filter-','',f)
-            #     genreList.append(fClean)
-            for g in EPgenre:
-                if g != "Comedy":
-                    genreList.append(g)
-            if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
-                genreList.insert(0, "Movie / Drama")
-            if 'News' in genreList:
-                genreList.insert(0, "News / Current affairs")
-            if 'Game show' in genreList:
-                genreList.insert(0, "Game show / Quiz / Contest")
-            if 'Law' in genreList:
-                genreList.insert(0, "Show / Game show")
-            if 'Art' in genreList or 'Culture' in genreList:
-                genreList.insert(0, "Arts / Culture (without music)")
-            if 'Entertainment' in genreList:
-                genreList.insert(0, "Popular culture / Traditional Arts")
-            if 'Politics' in genreList or 'Social' in genreList or 'Public affairs' in genreList:
-                genreList.insert(0, "Social / Political issues / Economics")
-            if 'Education' in genreList or 'Science' in genreList:
-                genreList.insert(0, "Education / Science / Factual topics")
-            if 'How-to' in genreList:
-                genreList.insert(0, "Leisure hobbies")
-            if 'Travel' in genreList:
-                genreList.insert(0, "Tourism / Travel")
-            if 'Sitcom' in genreList:
-                genreList.insert(0, "Variety show")
-            if 'Talk' in genreList:
-                genreList.insert(0, "Talk show")
-            if 'Children' in genreList:
-                genreList.insert(0, "Children's / Youth programs")
-            if 'Animated' in genreList:
-                genreList.insert(0, "Cartoons / Puppets")
-            if 'Music' in genreList:
-                genreList.insert(0, "Music / Ballet / Dance")
-        if epgenre == '1':
-            # for f in EPfilter:
-            #     fClean = re.sub('filter-','',f)
-            #     genreList.append(fClean)
-            for g in EPgenre:
+        xEpgenre1_found = 0
+
+        for g in EPgenre:
+            if (g == 'Comedy') and (epgenre == '2'):
+                    pass
+            else :
                 genreList.append(g)
-            if 'Movie' in genreList or 'movie' in genreList or 'Movies' in genreList:
-                genreList = ["Movie / Drama"]
-            elif 'News' in genreList:
-                genreList = ["News / Current affairs"]
-            elif 'News magazine' in genreList:
-                genreList = ["News magazine"]
-            elif 'Public affairs' in genreList:
-                genreList = ["News / Current affairs"]
-            elif 'Interview' in genreList:
-                genreList = ["Discussion / Interview / Debate"]
-            elif 'Game show' in genreList:
-                genreList = ["Game show / Quiz / Contest"]
-            elif 'Talk' in genreList:
-                genreList = ["Talk show"]
-            elif 'Sports' in genreList:
-                genreList = ["Sports"]
-            elif 'Sitcom' in genreList:
-                genreList = ["Variety show"]
-            elif 'Children' in genreList:
-                genreList = ["Children's / Youth programs"]
-            else:
-                genreList = ["Variety show"]
-        if epgenre == '3':
-            # for f in EPfilter:
-            #     fClean = re.sub('filter-','',f)
-            #     genreList.append(fClean)
-            for g in EPgenre:
-                genreList.append(g)
+        myLang = 'Lang_' + lang
+        myLevel = "Level_" + str(epgenre)
+        myGenDict = xLangGenres[myLang][myLevel]
+        for g in myGenDict:
+            if g in genreList :
+                if epgenre == '1' : 
+                    genreList.clear()
+                    genreList.append (myGenDict[g])
+                    xEpgenre1_found = 1 
+                elif epgenre == '2' : 
+                    genreList.insert(0,myGenDict[g])
+                else:
+                    pass
+### And if it isn't one of the Level1 categories, then make it a default.
+        if epgenre== '1' and xEpgenre1_found == 0 : 
+            genreList = ["Variety show"]
+
         if 'Movie' in genreList:
             genreList.remove('Movie')
             genreList.insert(0, 'Movie')
@@ -271,29 +313,32 @@ def mainRun(userdata):
         try:
             logging.info('Writing Stations to xmltv.xml file...')
             try:
-                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: int(x[1]['chnum'])))
+                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: float(x[1]['chnum'])))
             except:
+                logging.exception('Could not sort by chnum: %s ',  e)
+                logging.info('exception ordering by chnum... sorting by chfcc')
                 scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: x[1]['chfcc']))
             for station in scheduleSort:
                 fh.write('\t<channel id=\"' + station + '.zap2epg\">\n')
                 if 'chtvh' in scheduleSort[station] and scheduleSort[station]['chtvh'] is not None:
-                    xchtvh = re.sub('&','&amp;',scheduleSort[station]['chtvh'])
+                    xchtvh = html.escape(scheduleSort[station]['chtvh'], quote=True )
                     fh.write('\t\t<display-name>' + xchtvh + '</display-name>\n')
                 if 'chnum' in scheduleSort[station] and 'chfcc' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     xchfcc = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + xchnum + ' ' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
-                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + xchnum + ' ' + html.escape(xchfcc, quote=True) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + html.escape(xchfcc, quote=True) + '</display-name>\n')
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
                     xchfcc = scheduleSort[station]['chfcc']
-                    fh.write('\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
+                    fh.write('\t\t<display-name>' + html.escape(xchfcc,quote=True) + '</display-name>\n')
                 elif 'chnum' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     fh.write('\t\t<display-name>' + xchnum + '</display-name>\n')
                 if 'chicon' in scheduleSort[station]:
                     fh.write("\t\t<icon src=\"http:" + scheduleSort[station]['chicon'] + "\" />\n")
                 fh.write("\t</channel>\n")
+                logging.info(station + ',' + xchnum + ' ' + html.escape(xchfcc, quote=True) )
                 stationCount += 1
         except Exception as e:
             logging.exception('Exception: printStations')
@@ -305,9 +350,15 @@ def mainRun(userdata):
             logging.info('Writing Episodes to xmltv.xml file...')
             if xdesc is True:
                 logging.info('Appending Xdetails to description for xmltv.xml file...')
-            for station in schedule:
-                lang = 'en'
-                sdict = schedule[station]
+            try:
+                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: float(x[1]['chnum'])))
+            except:
+                logging.exception('Could not sort by chnum: %s ',  e)
+                logging.info('exception ordering by chnum... sorting by chfcc')
+                scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: x[1]['chfcc']))
+
+            for station in scheduleSort:
+                sdict = scheduleSort[station]  
                 for episode in sdict:
                     if not episode.startswith("ch"):
                         try:
@@ -321,20 +372,20 @@ def mainRun(userdata):
                                 dd_progid = edict['epid']
                                 fh.write('\t\t<episode-num system=\"dd_progid\">' + dd_progid[:-4] + '.' + dd_progid[-4:] + '</episode-num>\n')
                                 if edict['epshow'] is not None:
-                                    fh.write('\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
+                                    fh.write('\t\t<title lang=\"' + lang + '\">' + html.escape(edict['epshow'], quote=True ) + '</title>\n')
                                 if edict['eptitle'] is not None:
-                                    showTitle = re.sub('&','&amp;', edict['epshow'])
-                                    if stitle == "true":
-                                        safeTitle = re.sub('[\\/*?:"<>|]', "_", showTitle)
-                                        fh.write('\t\t<title lang=\"' + lang + '\">' + safeTitle + '</title>\n')
-                                    else:
-                                        fh.write('\t\t<title lang=\"' + lang + '\">' + showTitle + '</title>\n')
+                                    showTitle = edict['eptitle']
+                                    showTitle = showTitle.replace('\\\"','\"')
+                                    fh.write('\t\t<sub-title lang=\"'+ lang + '\">' + html.escape(showTitle, quote=True ) + '</sub-title>\n')
                                 if xdesc == 'true':
                                     xdescSort = addXDetails(edict)
-                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
+                                    xdescSort = xdescSort.replace('\\\"','\"')
+                                    fh.write('\t\t<desc lang=\"' + lang + '\">' + html.escape(xdescSort, quote=True ) + '</desc>\n')
                                 if xdesc == 'false':
                                     if edict['epdesc'] is not None:
-                                        fh.write('\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
+                                        xdescSort = edict['epdesc']
+                                        xdescSort = xdescSort.replace('\\\"','\"')
+                                        fh.write('\t\t<desc lang=\"' + lang + '\">' +  html.escape(xdescSort, quote=True ) + '</desc>\n')
                                 if edict['epsn'] is not None and edict['epen'] is not None:
                                     fh.write("\t\t<episode-num system=\"onscreen\">" + 'S' + edict['epsn'].zfill(2) + 'E' + edict['epen'].zfill(2) + "</episode-num>\n")
                                     fh.write("\t\t<episode-num system=\"xmltv_ns\">" + str(int(edict['epsn'])-1) +  "." + str(int(edict['epen'])-1) + ".</episode-num>\n")
@@ -371,7 +422,20 @@ def mainRun(userdata):
                                     if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
                                         for genre in genreNewList:
-                                            fh.write("\t\t<category lang=\"" + lang + "\">" + re.sub('&','&amp;', genre) + "</category>\n")
+                                            fh.write("\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                                for this_sport in genreNewList:
+                                    if this_sport in xCompetitionSports:
+                                        fh.write("\t\t<sport lang=\"" + lang + "\">" + this_sport + "</sport>\n")
+                                        for this_separator in xSportsTeamSeparators:
+                                            if edict['eptitle'] is not None:
+                                                xthisTitle = re.sub('&','&amp;', edict['eptitle'])
+                                                xMyTeams = xthisTitle.split(this_separator)
+                                                if len(xMyTeams) > 1:
+                                                    fh.write("\t\t<team lang=\"" + lang + "\">" +  xMyTeams[0] +  "</team>\n")             
+                                                    fh.write("\t\t<team lang=\"" + lang + "\">" +  xMyTeams[1] +  "</team>\n")
+                                                    if 'Sports' not in genreNewList:
+                                                        fh.write("\t\t<category lang=\"" + lang + "\">Sports</category>\n")
+                                            
                                 fh.write("\t</programme>\n")
                                 episodeCount += 1
                         except Exception as e:
@@ -400,28 +464,7 @@ def mainRun(userdata):
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
                 skey = station.get('channelId')
-                if stationList is not None:
-                    if skey in stationList:
-                        schedule[skey] = {}
-                        chName = station.get('callSign')
-                        schedule[skey]['chfcc'] = chName
-                        schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
-                        chnumStart = station.get('channelNo')
-                        if '.' not in chnumStart and chmatch == 'true' and chName is not None:
-                            chsub = re.search('(\d+)$', chName)
-                            if chsub is not None:
-                                chnumUpdate = chnumStart + '.' + chsub.group(0)
-                            else:
-                                chnumUpdate = chnumStart + '.1'
-                        else:
-                            chnumUpdate = chnumStart
-                        schedule[skey]['chnum'] = chnumUpdate
-                        if tvhmatch == 'true' and '.' in chnumUpdate:
-                            if chnumUpdate in tvhMatchDict:
-                                schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
-                            else:
-                                schedule[skey]['chtvh'] = None
-                else:
+                if stationList is None or skey in stationList:
                     schedule[skey] = {}
                     chName = station.get('callSign')
                     schedule[skey]['chfcc'] = chName
@@ -441,6 +484,7 @@ def mainRun(userdata):
                             schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
                         else:
                             schedule[skey]['chtvh'] = None
+ 
         except Exception as e:
             logging.exception('Exception: parseStations')
 
@@ -450,41 +494,7 @@ def mainRun(userdata):
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
                 skey = station.get('channelId')
-                if stationList is not None:
-                    if skey in stationList:
-                        episodes = station.get('events')
-                        for episode in episodes:
-                            epkey = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
-                            schedule[skey][epkey] = {}
-                            schedule[skey][epkey]['epid'] = episode['program'].get('tmsId')
-                            schedule[skey][epkey]['epstart'] = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
-                            schedule[skey][epkey]['epend'] = str(calendar.timegm(time.strptime(episode.get('endTime'), '%Y-%m-%dT%H:%M:%SZ')))
-                            schedule[skey][epkey]['eplength'] = episode.get('duration')
-                            schedule[skey][epkey]['epshow'] = episode['program'].get('title')
-                            schedule[skey][epkey]['eptitle'] = episode['program'].get('episodeTitle')
-                            schedule[skey][epkey]['epdesc'] = episode['program'].get('shortDesc')
-                            schedule[skey][epkey]['epyear'] = episode['program'].get('releaseYear')
-                            schedule[skey][epkey]['eprating'] = episode.get('rating')
-                            schedule[skey][epkey]['epflag'] = episode.get('flag')
-                            schedule[skey][epkey]['eptags'] = episode.get('tags')
-                            schedule[skey][epkey]['epsn'] = episode['program'].get('season')
-                            schedule[skey][epkey]['epen'] = episode['program'].get('episode')
-                            schedule[skey][epkey]['epthumb'] = episode.get('thumbnail')
-                            schedule[skey][epkey]['epoad'] = None
-                            schedule[skey][epkey]['epstar'] = None
-                            schedule[skey][epkey]['epfilter'] = episode.get('filter')
-                            schedule[skey][epkey]['epgenres'] = None
-                            schedule[skey][epkey]['epcredits'] = None
-                            schedule[skey][epkey]['epxdesc'] = None
-                            schedule[skey][epkey]['epseries'] = episode.get('seriesId')
-                            schedule[skey][epkey]['epimage'] = None
-                            schedule[skey][epkey]['epfan'] = None
-                            if "TBA" in schedule[skey][epkey]['epshow']:
-                                CheckTBA = "Unsafe"
-                            elif schedule[skey][epkey]['eptitle']:
-                                if "TBA" in schedule[skey][epkey]['eptitle']:
-                                    CheckTBA = "Unsafe"
-                else:
+                if stationList is None or skey in stationList:
                     episodes = station.get('events')
                     for episode in episodes:
                         epkey = str(calendar.timegm(time.strptime(episode.get('startTime'), '%Y-%m-%dT%H:%M:%SZ')))
@@ -524,6 +534,7 @@ def mainRun(userdata):
     def parseXdetails():
         showList = []
         failList = []
+        cacheDict = {}
         try:
             for station in schedule:
                 sdict = schedule[station]
@@ -532,80 +543,104 @@ def mainRun(userdata):
                         edict = sdict[episode]
                         EPseries = edict['epseries']
                         showList.append(edict['epseries'])
-                        filename = EPseries + '.json'
-                        fileDir = os.path.join(cacheDir, filename)
-                        try:
-                            if not os.path.exists(fileDir) and EPseries not in failList:
-                                retry = 3
-                                while retry > 0:
-                                    logging.info('Downloading details data for: %s', EPseries)
-                                    url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
-                                    data = 'programSeriesID=' + EPseries
-                                    data_encode = data.encode('utf-8')
-                                    try:
-                                        URLcontent = urllib.request.Request(url, data=data_encode)
-                                        JSONcontent = urllib.request.urlopen(URLcontent).read()
-                                        if JSONcontent:
-                                            with open(fileDir,"wb+") as f:
-                                                f.write(JSONcontent)
-                                                f.close()
-                                            retry = 0
-                                        else:
+                        if EPseries not in cacheDict: 
+                            logging.info('Adding series %s to cacheDict', EPseries)
+                            filename = EPseries + '.json'
+                            fileDir = os.path.join(cacheDir, filename)
+                            cacheDict[EPseries] = {}
+                            cacheDict[EPseries]['filename']= filename 
+                            cacheDict[EPseries]['epcredits']= None
+                            try:
+                                if not os.path.exists(fileDir) and EPseries not in failList:
+                                    retry = 3
+                                    while retry > 0:
+                                        logging.info('Downloading details data for: %s', EPseries)
+                                        url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
+                                        data = 'programSeriesID=' + EPseries
+                                        data_encode = data.encode('utf-8')
+                                        try:
+                                            URLcontent = urllib.request.Request(url, data=data_encode)
+                                            JSONcontent = urllib.request.urlopen(URLcontent).read()
+                                            if JSONcontent:
+                                                with open(fileDir,"wb+") as f:
+                                                    f.write(JSONcontent)
+                                                    f.close()
+                                                retry = 0
+                                            else:
+                                                time.sleep(1)
+                                                retry -= 1
+                                                logging.warning('Retry downloading missing details data for: %s', EPseries)
+                                        except urllib.error.URLError as e:
                                             time.sleep(1)
                                             retry -= 1
-                                            logging.warn('Retry downloading missing details data for: %s', EPseries)
-                                    except urllib.error.URLError as e:
-                                        time.sleep(1)
-                                        retry -= 1
-                                        logging.warn('Retry downloading details data for: %s  -  %s', EPseries, e)
-                            if os.path.exists(fileDir):
-                                fileSize = os.path.getsize(fileDir)
-                                if fileSize > 0:
-                                    with open(fileDir, 'rb') as f:
-                                        EPdetails = json.loads(f.read())
-                                        f.close()
-                                    logging.info('Parsing %s', filename)
-                                    edict['epimage'] = EPdetails.get('seriesImage')
-                                    edict['epfan'] = EPdetails.get('backgroundImage')
-                                    EPgenres = EPdetails.get('seriesGenres')
-                                    if filename.startswith("MV"):
-                                        edict['epcredits'] = EPdetails['overviewTab'].get('cast')
-                                        EPgenres = 'Movie|' + EPgenres
-                                    edict['epgenres'] = EPgenres.split('|')
-                                    #edict['epstar'] = EPdetails.get('starRating')
-                                    EPlist = EPdetails['upcomingEpisodeTab']
-                                    EPid = edict['epid']
-                                    for airing in EPlist:
-                                        if EPid.lower() == airing['tmsID'].lower():
-                                            if not episode.startswith("MV"):
-                                                try:
-                                                    origDate = airing.get('originalAirDate')
-                                                    if origDate != '':
-                                                        EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
-                                                        edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
-                                                except Exception as e:
-                                                    logging.exception('Could not parse oad for: %s - %s', episode, e)
-                                                try:
-                                                    TBAcheck = airing.get('episodeTitle')
-                                                    if TBAcheck != '':
-                                                        if "TBA" in TBAcheck:
-                                                            try:
-                                                                os.remove(fileDir)
-                                                                logging.info('Deleting %s due to TBA listings', filename)
-                                                                showList.remove(edict['epseries'])
-                                                            except OSError as e:
-                                                                logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
-                                                except Exception as e:
-                                                    logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
+                                            logging.warning('Retry downloading details data for: %s  -  %s', EPseries, e)
+                                if os.path.exists(fileDir):
+                                    fileSize = os.path.getsize(fileDir)
+                                    if fileSize > 0:
+                                        with open(fileDir, 'rb') as f:
+                                            EPdetails = json.loads(f.read())
+                                            f.close()
+                                        logging.info('Parsing %s', filename)
+                                        cacheDict[EPseries]['epimage'] = EPdetails.get('seriesImage')
+                                        cacheDict[EPseries]['epfan'] = EPdetails.get('backgroundImage')
+                                        EPgenres = EPdetails.get('seriesGenres')
+                                        if filename.startswith("MV"):
+                                            cacheDict[EPseries]['epcredits'] = EPdetails['overviewTab'].get('cast')
+                                            EPgenres = 'Movie|' + EPgenres
+                                        cacheDict[EPseries]['epgenres'] = EPgenres.split('|')
+                                        #edict['epstar'] = EPdetails.get('starRating')
+                                        cacheDict[EPseries]['upcomingEpisodeTab'] = EPdetails['upcomingEpisodeTab']
+                                        EPlist = cacheDict[EPseries]['upcomingEpisodeTab']
+                                        EPid = edict['epid']
+                                        for airing in EPlist:
+                                            try: 
+                                                if EPid.lower() == airing['tmsID'].lower():
+                                                    if not episode.startswith("MV"):
+                                                        try:
+                                                            TBAcheck = airing.get('episodeTitle')
+                                                            if TBAcheck != '':
+                                                                if "TBA" in TBAcheck:
+                                                                    try:
+                                                                        os.remove(fileDir)
+                                                                        logging.info('Deleting %s due to TBA listings', filename)
+                                                                        showList.remove(edict['epseries'])
+                                                                    except OSError as e:
+                                                                        logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                                        except Exception as e:
+                                                            logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
+                                            except Exception as e:
+                                                logging.exception('Could not find OAD for %s in file ', EPseries )
+                                    else:
+                                        logging.warning('Could not parse data for file - size <= 0  : %s - deleting file', filename)
+                                        os.remove(fileDir)
                                 else:
-                                    logging.warn('Could not parse data for: %s - deleting file', filename)
-                                    os.remove(fileDir)
-                            else:
-                                logging.warn('Could not download details data for: %s - skipping episode', episode)
-                                failList.append(EPseries)
-                        except Exception as e:
-                            logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
+                                    logging.warning('Could not download details data for: %s - skipping episode', EPseries)
+                                    failList.append(EPseries)
+                                    del cacheDict[EPseries]   # Delete from cache to indicate we failed.
+                            except Exception as e:
+                                logging.exception('Could not parse data for episode : %s - deleting file  -  %s', episode, e)
                             #os.remove(fileDir)
+                        if EPseries in cacheDict:  # it won't if the download failed.   
+                            edict['epimage'] = cacheDict[EPseries]['epimage']
+                            edict['epfan'] = cacheDict[EPseries]['epfan']
+                            if cacheDict[EPseries]['epcredits'] is not None:
+                                edict['epcredits'] = cacheDict[EPseries]['epcredits']
+                            edict['epgenres'] = cacheDict[EPseries]['epgenres']
+                            EPlist = cacheDict[EPseries]['upcomingEpisodeTab']
+                            EPid = edict['epid']
+                            for airing in EPlist:
+                                try: 
+                                    if EPid.lower() == airing['tmsID'].lower():
+                                        if not episode.startswith("MV"):
+                                            try:
+                                                origDate = airing.get('originalAirDate')
+                                                if origDate != '':
+                                                    EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
+                                                    edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
+                                            except Exception as e:
+                                                logging.exception('Could not parse oad for: %s - %s', episode, e)
+                                except Exception as e:
+                                    logging.exception(' Could not operate on OAD for %s ', EPseries )
         except Exception as e:
             logging.exception('Exception: parseXdetails')
         return showList
@@ -767,13 +802,13 @@ def mainRun(userdata):
             fileDir = os.path.join(cacheDir, filename)
             if not os.path.exists(fileDir):
                 try:
-                    logging.info('Downloading guide data for: %s', str(gridtime))
+                    logging.info('Downloading guide data for: %s (%s)', str(gridtime),datetime.datetime.fromtimestamp(gridtime).strftime('%Y-%m-%d %H:%M:%S'))
                     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
                     saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
-                    logging.warn('Could not download guide data for: %s', str(gridtime))
-                    logging.warn('URL: %s', url)
+                    logging.warning('Could not download guide data for: %s', str(gridtime))
+                    logging.warning('URL: %s', url)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:
@@ -788,9 +823,9 @@ def mainRun(userdata):
                             os.remove(fileDir)
                             logging.info('Deleting %s due to TBA listings', filename)
                         except OSError as e:
-                            logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                            logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                 except:
-                    logging.warn('JSON file error for: %s - deleting file', filename)
+                    logging.warning('JSON file error for: %s - deleting file', filename)
                     os.remove(fileDir)
             count += 1
             gridtime = gridtime + 10800
@@ -809,6 +844,6 @@ def mainRun(userdata):
 
 if __name__ == '__main__':
     userdata = os.getcwd()
-    log = os.path.join(userdata, 'zap2epg.log')
+    log = os.path.join(userdata, 'zap2epg_P3.log')
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     mainRun(userdata)
