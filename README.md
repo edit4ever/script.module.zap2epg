@@ -1,4 +1,4 @@
-# zap2epg - Kodi addon (script.module.zap2epg) - Nexus 
+# zap2epg - Kodi addon (script.module.zap2epg) - Nexus ready 
 
 zap2epg will generate an xmltv.xml file for USA/Canada TV lineups.*
 
