@@ -31,7 +31,7 @@ import datetime
 import _strptime
 import requests
 
-userdata = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
+userdata = xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 tvhoff = xbmcaddon.Addon().getSetting('tvhoff')
 if not os.path.exists(userdata):
         os.mkdir(userdata)
