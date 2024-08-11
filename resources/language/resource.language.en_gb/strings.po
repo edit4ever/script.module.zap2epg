@@ -30,7 +30,11 @@ msgctxt "#32006"
 msgid "Device"
 msgstr ""
 
-# 32007-32010 blank
+# 32007-32009 blank
+
+msgctxt "#32010"
+msgid "Data Handling"
+msgstr ""
 
 msgctxt "#32011"
 msgid "Options"
@@ -52,7 +56,20 @@ msgctxt "#32015"
 msgid "Number of Days to Delete Cache (re-download)"
 msgstr ""
 
-# 32016-32019 blank
+msgctxt "#32016"
+msgid "Remove unsafe Windows® characters from Show Titles"
+msgstr ""
+
+msgctxt "#32017"
+msgid "Remove unsafe Windows® characters from Episode Titles"
+msgstr ""
+
+msgctxt "#32018"
+msgid "Replace unsafe characters with: "
+msgstr ""
+
+msgctxt "#32019"
+msgid "Default language:"
 
 msgctxt "#32020"
 msgid "Include Episode Thumbnail"
@@ -70,7 +87,28 @@ msgctxt "#32023"
 msgid "Episode Image"
 msgstr ""
 
-# 32024-32029 blank
+msgctxt "#32024"
+msgid "Use Language Identification (requires langid module)"
+msgstr ""
+
+msgctxt "#32025"
+msgid "English"
+msgstr ""
+
+msgctxt "#32026"
+msgid "Spanish"
+msgstr ""
+
+msgctxt "#32027"
+msgid "French"
+msgstr ""
+
+
+# 32028 blank
+
+msgctxt "#32029"
+msgid "Use hex values for genre type instead of textual name"
+msgstr ""
 
 msgctxt "#32030"
 msgid "Include Episode Genres (colored EPG grid)"
@@ -222,7 +260,15 @@ msgctxt "#32229"
 msgid "20"
 msgstr ""
 
-# 32230-32299 blank
+msgctxt "#32230"
+msgid "21"
+msgstr ""
+
+msgctxt "#32231"
+msgid "22"
+msgstr ""
+
+# 32232-32299 blank
 
 msgctxt "#32300"
 msgid "None"
@@ -282,6 +328,14 @@ msgstr ""
 
 msgctxt "#32314"
 msgid "Movie Release Year"
+msgstr ""
+
+msgctxt "#32315"
+msgid "Genres"
+msgstr ""
+
+msgctxt "#32316"
+msgid "Determined Language"
 msgstr ""
 
 msgctxt "#32320"
