@@ -82,8 +82,7 @@ def mainRun(userdata):
         escapeChar = "_"
         userLangid = False
         useLang = False
-        useHex = False
-       # xdescOrderDict = []
+        useHex = 0
 
     for setting in settingsDict:
         if setting == 'slist':                              #station list from zap2it website i.e. 100105
