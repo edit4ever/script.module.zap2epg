@@ -15,23 +15,21 @@
 ################################################################################
 
 import urllib.request, urllib.error, urllib.parse
-import base64
+from tvh import tvh_connect, tvh_getData
+from genre import genreSort, countGenres
 import codecs
 import time
 import datetime
-#import _strptime
 import calendar
 import gzip
 import os
 import logging
 import re
 import json
-#import sys
-#from os.path import dirname
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-#import hashlib
 import html
+from collections import Counter
 
 try:
     import langid       #Determine if the langid module has been installed and set a flag if it has been.
@@ -59,30 +57,30 @@ def mainRun(userdata):
         settingID = setting.get('id')
         settingsDict[settingID] = settingStr
 
-        #Setup default values in case the settings XML does not have everything.
-        stationList = ""
-        zipcode = ""
-        lineup="lineup"  
-        device = ""
-        days = 1
-        redays = 0
-        xdetails = False
-        xdesc = False
-        epicon = 0
-        epgenre = 0
-        tvhoff = False
-        tvhurl = "127.0.0.1"
-        tvhport = "9981"
-        usern = ""
-        passw = ""
-        chmatch = False
-        tvhmatch = False
-        safetitle = False
-        safeepisode = False
-        escapeChar = "_"
-        userLangid = False
-        useLang = False
-        useHex = 0
+    #Setup default values in case the settings XML does not have everything.
+    stationList = ""
+    zipcode = ""
+    lineup="lineup"  
+    device = ""
+    days = 1
+    redays = 0
+    xdetails = False
+    xdesc = False
+    epicon = 0
+    epgenre = 0
+    tvhoff = False
+    tvhurl = "127.0.0.1"
+    tvhport = "9981"
+    usern = ""
+    passw = ""
+    chmatch = False
+    tvhmatch = False
+    safetitle = False
+    safeepisode = False
+    escapeChar = "_"
+    userLangid = False
+    useLang = False
+    useHex = 0
 
     for setting in settingsDict:
         if setting == 'slist':                              #station list from zap2it website i.e. 100105
@@ -130,7 +128,7 @@ def mainRun(userdata):
             if escapeChar is None: escapeChar = '_'
         if setting == 'langid':                             #Use module LangID to identify language based on the description field [True, False]
             userLangid = settingsDict[setting]
-            userLangid = {'1': 'en', '2': 'es', '3': 'fr'}.get(userLangid)
+            userLangid = {'0': 'en', '1': 'es', '2': 'fr'}.get(userLangid)
             if userLangid is None: userLangid = 'en'
         if setting == 'useLang':                            #Language to use if LangID is not used or can't determine language [em, es, fr, de, etc...]
             useLang = settingsDict[setting] 
@@ -146,7 +144,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-2.1.0 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running zap2epg-2.1.1 for zipcode: %s and lineup: %s', zipcode, lineup)
     logging.info(f'langid installed: {useLangid}')
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
@@ -176,28 +174,22 @@ def mainRun(userdata):
                 return userLangid   #If there is an error, return the default language
 
     def tvhMatchGet():
-        tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
-        channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
-        if usern is not None and passw is not None:
-            logging.info('Adding Tvheadend username and password to request url...')
-            request = urllib.request.Request(channels_url)
-            userpass = (usern + ':' + passw)
-            userpass_enc = base64.b64encode(userpass.encode('utf-8'))
-            request.add_header('Authorization', b'Basic ' + userpass_enc)
-            response = urllib.request.urlopen(request)
-        else:
-            response = urllib.request.urlopen(channels_url)
-        try:
-            logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
-            channels = json.load(response)
-            for ch in channels['entries']:
-                channelName = ch['name']
-                channelNum = ch['number']
-                tvhMatchDict[channelNum] = channelName
-            logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
-        except urllib.error.HTTPError as e:
-            logging.exception('Exception: tvhMatch - %s', e.strerror)
-            pass
+        if isConnectedtoTVH == True:
+            response = tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]')
+            if response.status_code == 200:
+                logging.info('Accessing Tvheadend channel list from: %s', tvhurl)
+                try:
+                    channels = json.loads(response.content)
+                    for ch in channels['entries']:
+                        channelName = ch['name']
+                        channelNum = ch['number']
+                        tvhMatchDict[channelNum] = channelName
+                    logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
+                except:
+                    logging.exception('Exception: tvhMatch - %s', f'Error parsing JSON response')
+            else:
+                logging.exception('Exception: tvhMatch - %s', f'Reqauest failed with status code {response.status_code}')
+                pass 
 
     def deleteOldCache(gridtimeStart):
         logging.info('Checking for old cache files...')
@@ -245,307 +237,6 @@ def mainRun(userdata):
         with gzip.open(fileDir,"wb+") as f:
             f.write(data)
             f.close()
-
-    def genreSort(EPfilter, EPgenre, edict):
-        genreList = []
-        updatedgenreList = []
-
-        if epgenre == '1':          #User selected 'Simple'
-            for g in EPgenre:
-                if g != "Comedy":
-                    genreList.append(g)
-            if not set(['movie', 'Movie','Movies','movies']).isdisjoint(genreList):
-                genreList.insert(0, "Movie / Drama")
-            if not set(['News']).isdisjoint(genreList):
-                genreList.insert(0, "News / Current affairs")
-            if not set(['Game show']).isdisjoint(genreList):
-                genreList.insert(0, "Game show / Quiz / Contest")
-            if not set(['Law']).isdisjoint(genreList):
-                genreList.insert(0, "Show / Game show")
-            if not set(['Art','Culture']).isdisjoint(genreList):
-                genreList.insert(0, "Arts / Culture (without music)")
-            if not set(['Entertainment']).isdisjoint(genreList):
-                genreList.insert(0, "Popular culture / Traditional Arts")
-            if not set(['Politics', 'Social', 'Public affairs']).isdisjoint(genreList):
-                genreList.insert(0, "Social / Political issues / Economics")
-            if not set(['Education', 'Science']).isdisjoint(genreList):
-                genreList.insert(0, "Education / Science / Factual topics")
-            if not set(['How-to']).isdisjoint(genreList):
-                genreList.insert(0, "Leisure hobbies")
-            if not set(['Travel']).isdisjoint(genreList):
-                genreList.insert(0, "Tourism / Travel")
-            if not set(['Sitcom']).isdisjoint(genreList):
-                genreList.insert(0, "Variety show")
-            if not set(['Talk']).isdisjoint(genreList):
-                genreList.insert(0, "Talk show")
-            if not set(['Children']).isdisjoint(genreList):
-                genreList.insert(0, "Children's / Youth programs")
-            if not set(['Animated']).isdisjoint(genreList):
-                genreList.insert(0, "Cartoons / Puppets")
-            if not set(['Music']).isdisjoint(genreList):
-                genreList.insert(0, "Music / Ballet / Dance")
-
-            return genreList
-
-        if epgenre == '2':          #User selected 'FULL' epg
-            
-            for g in EPgenre:
-                genreList.append(g)
-
-            #make each element lowercase, romve all spaces and any 's' at the end   
-            genreList = list(map(lambda x: x.lower().replace(" ", ""), genreList))
-            if (len(genreList) > 0 and genreList[0] != ''):
-                genreList = list(map(lambda x: x[0:-1] if x[-1] == 's' else x, genreList))
-            desc = f'{edict["epdesc"]} {edict["eptitle"]} {edict["epshow"]} {edict["epdesc"]}' 
-            desc = desc.lower()
-
-            #Movies   
-            # TVHeadend Docs: https://github.com/tvheadend/tvheadend/blob/master/src/epg.c#L1775 line 1775    
-            # Kodi Docs: https://github.com/xbmc/xbmc/blob/cda8e8c37190881fab4ea972d0d17cb54d5618d8/xbmc/addons/kodi-dev-kit/include/kodi/c-api/addon-instance/pvr/pvr_epg.h#L63 line 63
-            # Look in the strings.po for the language selected to determine the text that will be displayed inside KODi for each code
-            if not set(['movie']).isdisjoint(genreList):
-                if not set(['adultsonly','erotic','Gay/lesbian','LGBTQ']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adult movie","0x18"][useHex])                                           #Adult movie                    0x18   
-                elif not set(['detective','thriller','crime','crimedrama','mystery']).isdisjoint(genreList):
-                    updatedgenreList.append(["Detective/Thriller","0x11"][useHex])                                    #Detectivc/Thriller             0x11
-                elif not set(['sciencefiction','fantasy','horror','paranormal']).isdisjoint(genreList):
-                    updatedgenreList.append(["Science fiction/Fantasy/Horror","0x13"][useHex])                        #Science Fiction/Fantasy/Horror 0x13
-                elif not set(['comedy','comedydrama','darkcomedy']).isdisjoint(genreList):
-                    updatedgenreList.append(["Comedy","0x14"][useHex])                                               #Comedy                         0x14
-                elif not set(['western','war','military']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adventure/Western/War","0x12"][useHex])                                #Adventure/Western/War          0x12
-                elif not set(['soap', 'melodrama','folkloric', 'music','musical','musicalcomedy']).isdisjoint(genreList):
-                    updatedgenreList.append(["Soap/Melodrama/Folkloric","0x15"][useHex])                             #Soap/Melodrama/Folkloric       0x15
-                elif not set(['romance', 'romanticcomedy']).isdisjoint(genreList):
-                    updatedgenreList.append(["Romance","0x16"][useHex])                                              #Romance                        0x16
-                elif not set(['seriou','classical', 'religiou', 'historicaldrama', 'biography', 'documentary', 'docudrama']).isdisjoint(genreList):
-                    updatedgenreList.append(["Serious/Classical/Religious/Historical movie/Drama","0x17"][useHex])   #Serious/Classical/Religious/Historical Movie/Drama     0x17
-                elif not set(['adventure']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adventure/Western/War","0x12"][useHex])                                #Adventure/Western/War          0x12
-                else:
-                    updatedgenreList.append(["Movie / drama","0x10"][useHex])                                        #Movie/Drana                    0x10
-            
-            #Adult TV Shows
-            elif not set(['adultsonly','erotic','Gay/lesbian','LGBTQ']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adult movie","0xF8"][useHex])                                          #Adult Show                     0xF8
-
-            #Children Programming
-            elif not set(['children', 'youth']).isdisjoint(genreList):
-                if edict['eprating'] == 'TV-Y':
-                    updatedgenreList.append(["Pre-school children's programs","0x51"][useHex])                       #Pre-school Children's Programmes           0x51
-                elif edict['eprating'] == 'TV-Y7':
-                    updatedgenreList.append(["Entertainment programs for 6 to 14","0x52"][useHex])                   #Entertainment Programmes for 6 to 14       0x52
-                elif edict['eprating'] == 'TV-G':
-                    updatedgenreList.append(["Entertainment programs for 10 to 16","0x53"][useHex])                  #Entertainment Programmes for 10 to 16      0x53                                      
-                elif not set(['informational','educational','science','technology']).isdisjoint(genreList):
-                    updatedgenreList.append(["Informational/Educational/School programs","0x54"][useHex])            #Informational/Educational/School Programme 0x54        
-                elif not set(['anime', 'animated']).isdisjoint(genreList):
-                    updatedgenreList.append(["Cartoons/Puppets","0x55"][useHex])                                     #Cartoons/Puppets                           0x55 
-                else: 
-                    updatedgenreList.append(["Children's / Youth programs","0x50"][useHex])                          #Children's/Youth Programs                  0x50
-            
-            #MLeisure/Hobbies
-            elif not set(['advertisement', 'archery', 'auto', 'bodybuilding', 'consumer', 'cooking', 'exercise', 'fishing', 'fitnes', 
-                    'fitness&amp;health', 'gardening', 'handicraft', 'health', 'hobbie', 'homeimprovement', 'house/garden', 'how-to', 'hunting', 
-                    'motoring', 'outdoor', 'selfimprovement', 'shopping', 'tourism', 'travel']).isdisjoint(genreList):
-                
-                if not set(['tourism','travel']).isdisjoint(genreList):
-                    updatedgenreList.append(["Tourism / Travel","0xA1"][useHex])                                     #Tourism/Travel             0xA1
-                elif not set(['handicraft','homeimprovement','house/garden','how-to']).isdisjoint(genreList):
-                    updatedgenreList.append(["Handicraft","0xA2"][useHex])                                           #Handicraft                 0xA2         
-                elif not set(['motoring', 'auto']).isdisjoint(genreList):
-                    updatedgenreList.append(["Motoring","0xA3"][useHex])                                             #Motoring                   0xA3
-                elif not set(['fitnes','health', 'fitness&amp;health','selfimprovement','bodybuilding','exercise']).isdisjoint(genreList):
-                    updatedgenreList.append(["Fitness and health","0xA4"][useHex])                                   #Fitness & Health           0xA4
-                elif not set(['cooking']).isdisjoint(genreList):
-                    updatedgenreList.append(["Cooking","0xA5"][useHex])                                              #Cooking                    0xA5
-                elif not set(['advertisement','shopping','consumer']).isdisjoint(genreList):
-                    updatedgenreList.append(["Advertisement / Shopping","0xA6"][useHex])                             #Advertisement/Shopping     0xA6
-                elif not set(['gardening']).isdisjoint(genreList):
-                    updatedgenreList.append(["Gardening","0xA7"][useHex])                                            #Gardening                  0xA7
-                else: 
-                    updatedgenreList.append(["Leisure hobbies","0xA0"][useHex])                                      #Leisure/Hobbies            0xA0
-               
-            #News 
-            elif not set(['currentaffair', 'documentary', 'interview', 'new', 'newsmagazine']).isdisjoint(genreList):
-                
-                if not set(['weather']).isdisjoint(genreList):
-                    updatedgenreList.append(["News/Weather report","0x21"][useHex])                                  #News/Weather Report            0x21
-                elif not set(['newsmagazine']).isdisjoint(genreList):
-                    updatedgenreList.append(["News magazine","0x22"][useHex])                                        #News Magazine                  0x22         
-                elif not set(['documentary']).isdisjoint(genreList):
-                    updatedgenreList.append(["Documentary","0x23"][useHex])                                          #Documentary                    0x23
-                elif not set(['discussion', 'interview', 'debate']).isdisjoint(genreList):
-                    updatedgenreList.append(["Discussion/Interview/Debate","0x24"][useHex])                          #Discussion/Interview/Debate    0x24
-                else:
-                    updatedgenreList.append(["News/Current affairs","0x20"][useHex])                                 #News/Current Affair            0x20
-
-            #Sports        
-            elif not set(['actionsport', 'australianrulesfootball', 'autoracing', 'baseball', 'basketball', 'beachvolleyball', 'billiard', 'bmxracing', 
-                    'boatracing', 'bobsled', 'bowling', 'boxing', 'bullriding', 'cheerleading', 'cricket', 'cycling', 'diving', 'dragracing', 'equestrian', 
-                    'esport', 'fencing', 'fieldhockey', 'figureskating', 'fishing', 'football', 'footvolley', 'golf', 'gymnastic', 'hockey', 'horse', 'horseracing', 
-                    'karate', 'lacrosse', 'martialart', 'mixedmartialart', 'motorcycle', 'motorcycleracing', 'motorsport', 'multisportevent', 'olympic', 
-                    'paralympic', 'pickleball', 'prowrestling', 'racing', 'rodeo', 'rugby', 'rugbyleague', 'running', 'sailing', 'skating', 'skiing', 
-                    'snowboarding', 'soccer', 'softball', 'squash', 'superbowl', 'surfing', 'swimming', 'tabletenni', 'tenni', 'track/field', 'volleyball', 
-                    'waterpolo', 'watersport', 'weightlifting', 'wintersport', 'worldcup', 'wrestling']).isdisjoint(genreList):
-                if not set(['documentary','sportstalk']).isdisjoint(genreList):
-                    updatedgenreList.append(["Sports magazines","0x42"][useHex])                                     #Sports magazines                                   0x42
-                elif not set(['final','superbowl','worldcup','olympic','paralympic']).isdisjoint(genreList):
-                    updatedgenreList.append(["Special events (Olympic Games, World Cup, etc.)","0x41"][useHex])      #Special events (Olympic Games, World Cup, etc.)    0x41
-                elif not set(['football','soccer','australianrulesfootball']).isdisjoint(genreList):
-                    updatedgenreList.append(["Football/Soccer","0x43"][useHex])                                      #Football/Soccer                                    0x43
-                elif not set(['tenni','squash']).isdisjoint(genreList):
-                    updatedgenreList.append(["Tennis/Squash","0x44"][useHex])                                        #Tennis/Squash                                      0x44           
-                elif not set(['basketball', 'hockey','baseball','softball', 'gymnastic','volleyball','track/field','fieldhockey', 
-                        'lacrosse','rugby','cricket','fieldhockey']).isdisjoint(genreList):
-                    updatedgenreList.append(["Team sports (excluding football)","0x45"][useHex])                     #Team sports (excluding football)                   0x45
-                elif not set(['running','snowboarding','wrestling','cycling']).isdisjoint(genreList):
-                    updatedgenreList.append(["Athletics","0x46"][useHex])                                            #Athletics                                          0x46
-                elif not set(['autoracing','dragracing','motorcycle','motorcycleracing','motorsport']).isdisjoint(genreList):
-                    updatedgenreList.append(["Motor sport","0x47"][useHex])                                          #Motor sports                                       0x47
-                elif not set(['bmxracing', 'boatracing', 'diving', 'fishing', 'sailing', 'surfing', 'swimming', 'waterpolo', 'watersport']).isdisjoint(genreList):
-                    updatedgenreList.append(["Water sport","0x48"][useHex])                                          #Water sport                                        0x48
-                elif not set(['wintersport', 'skiing', 'bobsled', 'figureskating', 'skating','snowboarding']).isdisjoint(genreList):
-                    updatedgenreList.append(["Winter sports","0x49"][useHex])                                        #Winter sports                                      0x49
-                elif not set(['horse', 'equestrian', 'horseracing','rodeo','bullriding']).isdisjoint(genreList):
-                    updatedgenreList.append(["Equestrian","0x4A"][useHex])                                           #Equestrian                                         0x4A
-                elif not set(['martialart', 'mixedmartialart','karate']).isdisjoint(genreList):
-                    updatedgenreList.append(["Martial sports","0x4B"][useHex])                                       #Martial sports                                     0x4B
-                else:
-                    updatedgenreList.append(["Sports","0x40"][useHex])                                               #Sports                                             0x40
-
-            #Show
-            elif not set(['competition', 'competitionreality', 'contest', 'gameshow', 'quiz', 'reality', 'talk', 'talkshow', 'variety', 
-                    'varietyshow']).isdisjoint(genreList):
-                if not set(['gameshow','quiz','contest']).isdisjoint(genreList):
-                    updatedgenreList.append(["Game show/Quiz/Contest","0x31"][useHex])                               #Game show/Quiz/Contest             0x31
-                elif not set(['variety','varietyshow', 'competition', 'competitionreality', 'reality']).isdisjoint(genreList):
-                    updatedgenreList.append(["Variety show","0x32"][useHex])                                         #Variety Show                       0x32              
-                elif not set(['talk', 'talkshow']).isdisjoint(genreList):
-                    updatedgenreList.append(["Talk show","0x33"][useHex])                                            #Talk Show                          0x33
-                else:
-                    updatedgenreList.append(["Show / Game show","0x30"][useHex])                                     #Show/Game Show                     0x30
-
-            #Music/Ballet/Dance
-            elif not set(['ballet', 'classicalmusic', 'dance', 'folk', 'jazz', 'music', 'musical', 'opera', 'pop', 'rock', 'traditionalmusic']).isdisjoint(genreList):
-                if not set(['rock','pop']).isdisjoint(genreList):
-                    updatedgenreList.append(["Rock/Pop","0x61"][useHex])                                             #Rock/Pop                           0x61
-                elif not set(['seriou','classicalmusic']).isdisjoint(genreList):
-                    updatedgenreList.append(["Serious music/Classical music","0x62"][useHex])                        #Seriouis/Classical Music           0x62      
-                elif not set(['folk','traditionalmusic']).isdisjoint(genreList):
-                    updatedgenreList.append(["Folk/Traditional music","0x63"][useHex])                               #Folk/Traditional Music             0x63
-                elif not set(['jazz']).isdisjoint(genreList):
-                    updatedgenreList.append(["Jazz","0x64"][useHex])                                                 #Jazz                               0x64
-                elif not set(['musical','opera']).isdisjoint(genreList):
-                    updatedgenreList.append(["Musical/Opera","0x65"][useHex])                                        #Musical/Opera                      0x65
-                elif not set(['ballet']).isdisjoint(genreList):
-                    updatedgenreList.append(["Ballet","0x66"][useHex])                                               #Ballet                             0x66
-                else:
-                    updatedgenreList.append(["Music / Ballet / Dance","0x60"][useHex])                               #Music/Ballet/Dance                 0x60
-
-            #Arts/Culture
-            elif not set(['art', 'arts/craft', 'artsmagazine', 'broadcasting', 'cinema', 'culture', 'culturemagazine', 'experimentalfilm', 'fashion', 'film', 
-                'fineart', 'literature', 'newmedia', 'performingart', 'popularculture', 'pres', 'religion', 'religiou', 'traditionalart', 'video']).isdisjoint(genreList):
-
-                if not set(['performingart']).isdisjoint(genreList):
-                    updatedgenreList.append(["Performing arts","0x71"][useHex])                                      #Performing Arts                    0x71
-                elif not set(['fineart']).isdisjoint(genreList):
-                    updatedgenreList.append(["Fine arts","0x72"][useHex])                                            #Fine Arts                          0x72            
-                elif not set(['religion','religiou']).isdisjoint(genreList):
-                    updatedgenreList.append(["Religion","0x73"][useHex])                                             #Religion                           0x73
-                elif not set(['popculture','traditionalart']).isdisjoint(genreList):
-                    updatedgenreList.append(["Popular culture/Traditional arts","0x74"][useHex])                     #Pop Culture/Traditional Arts       0x74
-                elif not set(['literature']).isdisjoint(genreList):
-                    updatedgenreList.append(["Literature","0x75"][useHex])                                           #Literature                         0x75
-                elif not set(['film','cinema']).isdisjoint(genreList):
-                    updatedgenreList.append(["Film/Cinema","0x76"][useHex])                                          #Film/Cinema                        0x76        
-                elif not set(['experimentalfilm','video']).isdisjoint(genreList):
-                    updatedgenreList.append(["Experimental film/Video","0x77"][useHex])                              #Experimental Film/Video            0x77
-                elif not set(['broadcasting','pres']).isdisjoint(genreList):
-                    updatedgenreList.append(["Broadcasting/Press","0x78"][useHex])                                   #Broadcasting/Press                 0x78
-                elif not set(['newmedia']).isdisjoint(genreList):
-                    updatedgenreList.append(["New media","0x79"][useHex])                                            #New Media                          0x79
-                elif not set(['artmagazine','culturemagazine','magazine']).isdisjoint(genreList):
-                    updatedgenreList.append(["Arts magazines/Culture magazines","0x7A"][useHex])                     #Arts/Culture Magazine              0x7A
-                elif not set(['fashion']).isdisjoint(genreList):
-                    updatedgenreList.append(["Fashion","0x7B"][useHex])                                              #Fashion                            0x7B
-                else:    
-                    updatedgenreList.append(["Arts / Culture (without music)","0x70"][useHex])                       #Arts/Culture                       0x70
-
-            #Social/Politics/Economics
-            elif not set(['community', 'documentary', 'economic', 'magazine', 'politic', 'political', 'publicaffair', 
-                    'remarkablepeople', 'report', 'social', 'socialadvisory']).isdisjoint(genreList):
-
-                if not set(['magazine','report','documentary']).isdisjoint(genreList):
-                    updatedgenreList.append(["Magazines/Reports/Documentary","0x81"][useHex])                        #Magazines/Reports/Documentary      0x81
-                elif not set(['economic','socialadvisory']).isdisjoint(genreList):
-                    updatedgenreList.append(["Economics/Social advisory","0x82"][useHex])                            #Economics/Social Advisory          0x82            
-                elif not set(['remarkablepeople']).isdisjoint(genreList):
-                    updatedgenreList.append(["Remarkable people","0x83"][useHex])                                    #Remarkable People                  0x83
-                else:
-                    updatedgenreList.append(["Social/Political issues/Economics","0x80"][useHex])                    #Social/Political/Economics         0x80
-
-            #MEducational/Science
-            elif not set(['adulteducation', 'animal', 'dogshow', 'education', 'educational', 'environment', 'expedition', 'factual', 'foreigncountrie', 
-                    'furthereducation', 'health', 'language', 'medical', 'medicine', 'naturalscience', 'nature', 'outdoor', 'physiology', 'psychology', 
-                    'science', 'social', 'spiritualscience', 'technology']).isdisjoint(genreList):
-                
-                if not set(['nature','animal','environment','outdoor','dogshow']).isdisjoint(genreList):
-                    updatedgenreList.append(["Nature/Animals/Environment","0x91"][useHex])                           #Nature/Animals/Environment         0x91          
-                elif not set(['technology','naturalscience']).isdisjoint(genreList):
-                    updatedgenreList.append(["Technology/Natural sciences","0x92"][useHex])                          #Technology/Natural Sciences        0x92
-                elif not set(['medicine','physiology','psychology','health','medical']).isdisjoint(genreList):
-                    updatedgenreList.append(["Medicine/Physiology/Psychology","0x93"][useHex])                       #Medicine/Physiology/Psychology     0x93
-                elif not set(['foreigncountrie','expedition']).isdisjoint(genreList):
-                    updatedgenreList.append(["Foreign countries/Expeditions","0x94"][useHex])                        #Foreign Countries/Expeditions      0x94
-                elif not set(['social','spiritualscience']).isdisjoint(genreList):
-                    updatedgenreList.append(["Social/Spiritual sciences","0x95"][useHex])                            #Social/Spiritual Sciences          0x95
-                elif not set(['furthereducation','adulteducation']).isdisjoint(genreList):
-                    updatedgenreList.append(["Further education","0x96"][useHex])                                    #Further Education                  0x96
-                elif not set(['language']).isdisjoint(genreList):
-                    updatedgenreList.append(["Languages","0x97"][useHex])                                            #Languages                          0x97
-                else:
-                    updatedgenreList.append(["Education / Science / Factual topics","0x90"][useHex])                 #Education/Science                  0x90
-
-            # TVHeadend does not recognize the non-movie genres below.  0xF# are user defined genres per the specification and TVH
-            # does not use them.  Kodi does use these user defined values.  I could not figure out a way to pass the hex code to TVH
-            # instead of the string to be recoginzed correctly.  When TVH is modified to accept a hex value for the genre we can then
-            # use these codes to get correct EPG colored grids.  One color for movies with it's separate color and one for TV shows.
-
-            elif not set(['crime', 'crimedrama', 'detective', 'mystery', 'thriller']).isdisjoint(genreList):
-                    updatedgenreList.append(["Detective/Thriller","0xF1"][useHex])                                   #Detective/Thriller                 0xF1
-
-            elif not set(['fantasy', 'horror', 'paranormal', 'sciencefiction']).isdisjoint(genreList):
-                    updatedgenreList.append(["Science fiction/Fantasy/Horror","0xF3"][useHex])                       #Science Fiction/Fantasy/Horror     0xF3
-                    
-            elif not set(['western','war','military']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adventure/Western/War","0xF2"][useHex])                                #Adventure/Western/War              0xF2
-
-            elif not set(['comedy', 'comedydrama', 'darkcomedy', 'sitcom']).isdisjoint(genreList):
-                    updatedgenreList.append(["Comedy","0xF4"][useHex])                                               #Comedy                             0xF4
-
-            elif not set(['folk', 'folkloric', 'melodrama', 'music', 'musical', 'musicalcomedy', 'soap']).isdisjoint(genreList):
-                    updatedgenreList.append(["Soap/Melodrama/Folkloric","0xF5"][useHex])                             #Soap/Melodrama/Folkloric           0xF5
-
-            elif not set(['romance','romanticcomedy']).isdisjoint(genreList):
-                    updatedgenreList.append(["Romance","0xF6"][useHex])                                              #Romance                            0xF6
-
-            elif not set(['biography', 'classical', 'classicalreligion', 'docudrama', 'historical', 'historicaldrama', 'religion', 'seriou']).isdisjoint(genreList):
-                    updatedgenreList.append(["Serious/Classical/Religious/Historical movie/Drama","0xF7"][useHex])  #Serious/Classical/Religion/Historical  0xF7
-
-            elif not set(['adventure']).isdisjoint(genreList):
-                    updatedgenreList.append(["Adventure/Western/War","0xF2"][useHex])                               #Adventure/Western/War              0xF2
-
-            elif not set(['drama']).isdisjoint(genreList):
-                    updatedgenreList.append(["Movie / Drama","0xF0"][useHex])                                       #Drama                              0xF0
-
-            return updatedgenreList
-
-
-        if epgenre == '2':               #User selected 'original' epg tag
-            for g in EPgenre:
-                genreList.append(g)
-        return genreList
 
     def printHeader(fh, enc):           #This is the header for the XMLTV file
         logging.info('Creating xmltv.xml file...')
@@ -671,7 +362,7 @@ def mainRun(userdata):
                                     fh.write(f'\t\t<star-rating>\n\t\t\t<value>{edict["epstar"]}/4</value>\n\t\t</star-rating>\n')
                                 if epgenre != '0':
                                    if edict['epfilter'] is not None and edict['epgenres'] is not None:
-                                        genreNewList = genreSort(edict['epfilter'], edict['epgenres'], edict)
+                                        genreNewList = genreSort(edict, epgenre, useHex)
                                         for genre in genreNewList:
                                             genre = html.escape(genre, quote=True)
                                             fh.write(f'\t\t<category lang=\"en\">{genre}</category>\n')
@@ -1047,7 +738,11 @@ def mainRun(userdata):
         except Exception as e:
             logging.exception('Exception: addXdetails to description')
 
-
+    def connect_to_TVH():
+        global isConnectedtoTVH 
+        isConnectedtoTVH = True if tvh_connect(tvhurl, tvhport, usern, passw) is not None else False
+    
+    connect_to_TVH()
     try:
         if not os.path.exists(cacheDir):
             os.mkdir(cacheDir)
@@ -1099,6 +794,9 @@ def mainRun(userdata):
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
+        counter = dict(sorted(Counter(countGenres()).items()))
+        for cnt in counter:
+            logging.info(cnt + ": " + str(counter[cnt]))        
         return timeRun, stationCount, episodeCount
     except Exception as e:
         logging.exception('Exception: main')

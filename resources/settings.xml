@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
   <category label="32011">
-    <setting label="32012" type="slider" id="days" default="1" range="1,1,14" option="int"/>
-    <setting label="32015" type="slider" id="redays" default="1" range="0,1,14" option="int"/>
+    <setting label="32012" type="slider" id="days" default="3" range="1,1,14" option="int"/>
+    <setting label="32015" type="slider" id="redays" default="0" range="0,1,14" option="int"/>
     <setting type="sep"/>
 	<setting label="32013" type="bool" id="xdetails" default="false"/>
     <setting label="32014" type="bool" id="xdesc" default="true"/>
@@ -44,7 +44,7 @@
     <setting label="32231" type="enum" id="desc22" default="0" lvalues="32300|32301|32320|32302|32321|32322|32323|32324|32325|32303|32304|32305|32306|32307|32308|32309|32310|32311|32312|32313|32314|32315|32316"/>
   </category>
   <category label="32040">
-    <setting label="32049" type="bool" id="tvhoff" default="true"/>
+    <setting label="32049" type="bool" id="tvhoff" default="false"/>
     <setting type="sep"/>
     <setting label="32045" enable="eq(-2,true)" type="ipaddress" id="tvhurl" default="127.0.0.1"/>
     <setting label="32046" enable="eq(-3,true)" type="number" id="tvhport" default="9981"/>

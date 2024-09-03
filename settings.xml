@@ -5,12 +5,12 @@
     <setting id="xdesc">true</setting>
     <setting id="epicon">1</setting>
     <setting id="epgenre">2</setting>
-    <setting id="useHex">false</setting>
+    <setting id="useHex" default="true">false</setting>
     <setting id="safetitle" default="true">false</setting>
     <setting id="safeepisode" default="true">false</setting>
     <setting id="escapechar" default="true">_</setting>
-    <setting id="langid">0</setting>
-    <setting id="useLang" default="true">false</setting>
+    <setting id="langid" default="true">0</setting>
+    <setting id="useLang">true</setting>
     <setting id="desc01">10</setting>
     <setting id="desc02">17</setting>
     <setting id="desc03">6</setting>
@@ -34,15 +34,15 @@
     <setting id="desc21">19</setting>
     <setting id="desc22" default="true">0</setting>
     <setting id="tvhoff">true</setting>
-    <setting id="tvhurl" default="true">127.0.0.1</setting>
+    <setting id="tvhurl">192.168.52.148</setting>
     <setting id="tvhport">9981</setting>
     <setting id="usern">osmc</setting>
     <setting id="passw">osmc</setting>
     <setting id="chmatch">true</setting>
     <setting id="tvhmatch">true</setting>
-    <setting id="zipcode">85715</setting>
+    <setting id="zipcode">85710</setting>
     <setting id="lineup">Local Over the Air Broadcast</setting>
     <setting id="lineupcode">lineupId</setting>
     <setting id="device" default="true">-</setting>
-    <setting id="slist">42676</setting>
+    <setting id="slist">42676,81351,100105,112508,112473,35688,36183,36187,95698,36184,63024,64906,107310,119584,121446,33914,66662,91574,129348,129522,32484,54806,46789,112331,138458,129639,95604,106043,106044,106045,33917,99600,122623,122624,35686,36219,63204,93834,93837,34838,74588,76896,124202,53080,90228,87135,90169,121894,34926,56046,111231,120121,122518</setting>
 </settings>

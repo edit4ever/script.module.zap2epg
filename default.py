@@ -13,14 +13,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
-import xbmc,xbmcaddon,xbmcvfs,xbmcgui,xbmcplugin
-import subprocess
-from subprocess import Popen
-from xbmcswift2 import Plugin
-import io
+import xbmc, xbmcaddon, xbmcvfs, xbmcgui
+from tvh import tvh_connect, tvh_getData, tvh_logsetup
+
+from xbmcswift2 import Plugin 
 import os
 import re
-import sys
 import logging
 import zap2epg
 import urllib.request, urllib.error, urllib.parse
@@ -28,12 +26,10 @@ import json
 from collections import OrderedDict
 import time
 import datetime
-import _strptime
-import requests
 #import web_pdb; web_pdb.set_trace()
 
 userdata = xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
-tvhoff = xbmcaddon.Addon().getSetting('tvhoff')
+tvhoff = True if xbmcaddon.Addon().getSetting('tvhoff') == 'true' else False
 if not os.path.exists(userdata):
     os.mkdir(userdata)
 log = os.path.join(userdata, 'zap2epg.log')
@@ -43,45 +39,59 @@ cacheDir = os.path.join(userdata, 'cache')
 plugin = Plugin()
 dialog = xbmcgui.Dialog()
 gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
+connection = None
 
-if tvhoff == 'true':
-    try:
-        tvh_url_get = xbmcaddon.Addon('pvr.hts').getSetting("host")
-        if tvh_url_get:
-            tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value=tvh_url_get)
+def connectTVH(updateSetting = False):
+    global tvhoff
+    if tvhoff is True:
+        tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
+        tvh_port = xbmcaddon.Addon().getSetting('tvhport')
+        tvh_usern = xbmcaddon.Addon().getSetting('usern')
+        tvh_passw = xbmcaddon.Addon().getSetting('passw')
+        
+        pvr = {}
+        try:
+            pvr['ipaddress'] = xbmcaddon.Addon('pvr.hts').getSetting("host")
+            pvr['port'] = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
+            pvr['user'] = tvh_usern
+            pvr['password'] = tvh_passw
+        except:
+            pvr.clear()
+        global connection
+        connection = tvh_connect(tvh_url, tvh_port, tvh_usern, tvh_passw, pvr)
+        tvhoff = True if connection is not None else False
+        if tvhoff is True:
+            if tvh_url != connection['ipaddress']:
+                response = dialog.yesno('Update TVH Settings?', f'{tvh_url} TVH server was not found.\n\nWould you like to use the IP address found in the TVH PVR?\n{connection["ipaddress"]}')
+                if response is True:
+                    xbmcaddon.Addon().setSetting(id='tvhurl', value=connection['ipaddress'])
+                    xbmcaddon.Addon().setSetting(id='tvhport', value=connection['port'])
+                else:
+                    if updateSetting:
+                        connection = None
+                        tvhoff = False
+                        xbmcaddon.Addon().setSetting(id='tvhoff', value='false')
         else:
-            try:
-                tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-            except:
-                tvh_url_set = xbmcaddon.Addon().setSetting(id='tvhurl', value="127.0.0.1")
-        tvh_port_get = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
-        if tvh_port_get:
-            tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value=tvh_port_get)
-        else:
-            try:
-                tvh_port = xbmcaddon.Addon().getSetting('tvhport')
-            except:
-                tvh_port_set = xbmcaddon.Addon().setSetting(id='tvhport', value="9981")
-    except:
-        pass
+            dialog.ok("TVHeadend Server", f'The TVH server {tvh_url} was not found or username / password was incorrect.  Please check TVH settings')
+            if updateSetting:
+                connection = None
+                tvhoff = False
+                xbmcaddon.Addon().setSetting(id='tvhoff', value='false')
 
-    tvh_port = xbmcaddon.Addon().getSetting('tvhport')
-    tvh_usern = xbmcaddon.Addon().getSetting('usern')
-    tvh_passw = xbmcaddon.Addon().getSetting('passw')
-    if tvh_usern == None and tvh_passw == None:
-        tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-    elif tvh_usern == "" and tvh_passw == "":
-        tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
-    else:
-        tvh_url = tvh_usern + ":" + tvh_passw + "@" + xbmcaddon.Addon().getSetting('tvhurl')
-    try:
-        check_url = 'http://' + tvh_url + ':' + tvh_port + '/api/status/connections'
-        check_load = requests.get(check_url)
-        check_status = check_load.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        dialog.ok("Tvheadend Access Error!",f"{err}\n\nPlease check your username/password in settings.")
-    except requests.exceptions.RequestException as e:
-        dialog.ok("Tvheadend Access Error!", "Could not connect to Tvheadend server.\nPlease check your Tvheadend server is running or check the IP and port configuration in the settings.")
+def getTVHChannels():
+    global tvhoff, connection
+    if connection is None:
+        connectTVH()
+    if connection is not None:
+        response = tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name')
+        try:
+            logging.info('Accessing Tvheadend channel list from: %s', connection['ipaddress'])
+            channels = response.json()
+            with open(tvhList,"w") as f:
+                json.dump(channels,f)
+        except urllib.error.HTTPError as e:
+            logging.exception('Exception: tvhClist - %s', e.strerror)
+            tvhoff = False
 
 def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
@@ -89,18 +99,9 @@ def get_icon_path(icon_name):
 
 def create_cList():
     tvhClist = []
-    if tvhoff == 'true':
-        if not os.path.isfile(tvhList):
-            channels_url = 'http://' + tvh_url + ':' + tvh_port + '/api/channel/grid?all=1&limit=999999999&sort=name'
-            response = requests.get(channels_url)
-            try:
-                logging.info('Accessing Tvheadend channel list from: %s', channels_url)
-                channels = response.json()
-                with open(tvhList,"w") as f:
-                    json.dump(channels,f)
-            except urllib.error.HTTPError as e:
-                logging.exception('Exception: tvhClist - %s', e.strerror)
-                pass
+    if tvhoff is True and not os.path.isfile(tvhList):
+        getTVHChannels()
+    if tvhoff is True:    
         with open(tvhList) as tvhData:
             tvhDict = json.load(tvhData)
             for ch in tvhDict['entries']:
@@ -123,6 +124,15 @@ def create_cList():
             else:
                 stationDict[skey]['include'] = 'False'
     stationDictSort = OrderedDict(sorted(iter(stationDict.items()), key=lambda i: (float(i[1]['num']))))
+
+    #Search the stations for duplicate channel numbers.  Get rid of the non 'DT' channel(s) if so.
+    for station in stationDictSort:
+        myStations = {k: v for k, v in stationDictSort.items() if v['num'] == stationDictSort[station]['num']}
+        if len(myStations) > 1:
+            for st in myStations:
+                if myStations[st]['name'].find('DT') < 0:
+                    stationDictSort[st]['include'] = 'False'
+                    
     with open(Clist,"w") as f:
         json.dump(stationDictSort,f)
 
@@ -149,7 +159,7 @@ def channels():
         stationCode.append(station)
         stationListName.append(stationDict[station]['name'])
         stationListNum.append(stationDict[station]['num'])
-        stationListInclude.append(stationDict[station]['include'])
+        stationListInclude.append(stationDict[station]['include'])  
     stationPre = [i for i, x in enumerate(stationListInclude) if x == 'True']
     stationListFull = list(zip(stationListNum, stationListName))
     stationList = ["%s %s" % x for x in stationListFull]
@@ -175,7 +185,6 @@ def location():
         zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_NUMERIC)
     if countryNew == 1:
         zipcodeNew = dialog.input('Enter your zipcode', defaultt=zipcode, type=xbmcgui.INPUT_ALPHANUM)
-    #import web_pdb; web_pdb.set_trace()
     if not 'zipcodeNew' in vars() or 'zipcodeNew' in globals():
         return
     zipcodeNew = re.sub(' ', '', zipcodeNew)
@@ -239,6 +248,7 @@ def location():
 @plugin.route('/run')
 def run():
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
+    tvh_logsetup(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
     status = zap2epg.mainRun(userdata)
     dialog.ok('zap2epg Finished!', 'zap2epg completed in ' + str(status[0]) + ' seconds.\n' + str(status[1]) + ' Stations and ' + str(status[2]) + ' Episodes written to xmltv.xml file.')
 
@@ -246,8 +256,21 @@ def run():
 
 @plugin.route('/open_settings')
 def open_settings():
-    plugin.open_settings()
-
+    plugin.open_settings() 
+    global tvhoff, connection
+    # Test the connection to TVH if tvhoff is true
+    tvhoff = True if xbmcaddon.Addon().getSetting('tvhoff') == 'true' else False
+    if tvhoff is True:
+        connectTVH(True)
+        try: 
+            os.remove(tvhList) 
+        except: 
+            pass     
+        if connection is not None:
+            getTVHChannels()
+        else:
+            tvhoff = False
+            xbmcaddon.Addon().setSetting(id='tvhoff', value='false')
 
 @plugin.route('/')
 def index():
