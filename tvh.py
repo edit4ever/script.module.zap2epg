@@ -96,5 +96,5 @@ def tvh_getData(string):
         return None
     
 
-#print(connect_TVH(ipaddress='192.168.52.148',port='9981',usern='osmc',passw='osmc',tvh={'ipaddress': '192.168.52.149', 'port': '9981', 'user': 'osmc', 'password': 'osmc'}))
+#print(tvh_connect(ipaddress='192.168.0.150',port='9981',usern='osmc',passw='osmc',tvh={'ipaddress': '192.168.0.249', 'port': '9981', 'user': 'osmc', 'password': 'osmc'}))
 #print(tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name'))
