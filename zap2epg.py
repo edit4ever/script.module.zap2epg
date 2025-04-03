@@ -83,7 +83,7 @@ def mainRun(userdata):
     useHex = 0
 
     for setting in settingsDict:
-        if setting == 'slist':                              #station list from zap2it website i.e. 100105
+        if setting == 'slist':                              #station list from gracenote website i.e. 100105
             stationList = settingsDict[setting]
         if setting == 'zipcode':                            #zipcode
             zipcode = settingsDict[setting]
@@ -91,7 +91,7 @@ def mainRun(userdata):
             lineup = settingsDict[setting]
         if setting == 'lineupcode':                         #Lineup Code [string default==lineupid]
             lineupcode = settingsDict[setting]
-        if setting == 'device':                             #Device name to be sent to zap2it website
+        if setting == 'device':                             #Device name to be sent to gracenote website
             device = settingsDict[setting]
         if setting == 'days':                               #Number of days to download data (1 to 14)
             days = settingsDict[setting]
@@ -242,7 +242,7 @@ def mainRun(userdata):
         logging.info('Creating xmltv.xml file...')
         fh.write(f'<?xml version=\"1.0\" encoding=\"{enc}\"?>\n')
         #fh.write("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n")
-        fh.write("<tv source-info-url=\"http://tvschedule.zap2it.com/\" source-info-name=\"zap2it.com\">\n")
+        fh.write("<tv source-info-url=\"http://tvschedule.gracenote.com/\" source-info-name=\"gracenote.com\">\n")
 
     def printFooter(fh):                #This is the footer for the XMLTV file
         fh.write("</tv>")
@@ -376,7 +376,7 @@ def mainRun(userdata):
         except Exception as e:
             logging.exception('Exception: printEpisodes')
 
-    def xmltv():            # Routine called after the data has been collected from zap2it website
+    def xmltv():            # Routine called after the data has been collected from gracenote website
         try:
             enc = 'UTF-8'
             outFile = os.path.join(userdata, 'xmltv.xml')
@@ -389,7 +389,7 @@ def mainRun(userdata):
         except Exception as e:
             logging.exception('Exception: xmltv')
 
-    def parseStations(content):     #Routine downloads the necessary files from zap2it website.
+    def parseStations(content):     #Routine downloads the necessary files from gracenote website.
         try:
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
@@ -533,7 +533,7 @@ def mainRun(userdata):
                                 retry = 3
                                 while retry > 0:
                                     logging.info('Downloading details data for: %s', EPseries)
-                                    url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
+                                    url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     data_encode = data.encode('utf-8')
                                     try:
@@ -759,7 +759,7 @@ def mainRun(userdata):
             if not os.path.exists(fileDir):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = f"http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
+                    url = f"https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
                     saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
