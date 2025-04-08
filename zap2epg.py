@@ -352,14 +352,21 @@ def mainRun(userdata):
                                         fh.write(f'start=\"{convTime(edict["epoad"])} {TZoffset}\" ')
                                     fh.write("/>\n")
                                 if edict['epflag'] is not None:
-                                    if 'New' in edict['epflag']:
-                                        fh.write("\t\t<new />\n")
+                                    if 'Finale' in edict['epflag']:
+                                        fh.write("\t\t<last-chance />\n")
                                     if 'Live' in edict['epflag']:
                                         fh.write("\t\t<live />\n")
+                                    if 'New' in edict['epflag']:
+                                        fh.write("\t\t<new />\n")
+                                    if 'Premiere' in edict['epflag']:
+                                        fh.write("\t\t<premiere />\n")
                                 if edict['eprating'] is not None:
                                     fh.write(f'\t\t<rating>\n\t\t\t<value>{edict["eprating"]}</value>\n\t\t</rating>\n')
                                 if edict['epstar'] is not None:
                                     fh.write(f'\t\t<star-rating>\n\t\t\t<value>{edict["epstar"]}/4</value>\n\t\t</star-rating>\n')
+                                if edict['eptags'] is not None:
+                                   if 'CC' in edict['eptags']:
+                                        fh.write('\t\t<subtitles type="teletext" />\n')
                                 if epgenre != '0':
                                    if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict, epgenre, useHex)
