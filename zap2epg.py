@@ -702,17 +702,6 @@ def mainRun(userdata):
                 myear = "Released: " + edict['epyear'] + space
             if edict['eprating'] is not None:
                 ratings = edict['eprating'] + space
-            if edict['epflag'] != []:
-                flagList = edict['epflag']
-                new = ' - '.join(flagList).upper() + space
-            #if edict['epnew'] is not None:
-                #new = edict['epnew'] + space
-            #if edict['eplive'] is not None:
-                #new = edict['eplive'] + space
-            #if edict['epprem'] is not None:
-                #new = edict['epprem'] + space
-            #if edict['epfin'] is not None:
-                #new = edict['epfin'] + space
             if edict['eptags'] != []:
                 tagsList = edict['eptags']
                 cc = ' | '.join(tagsList).upper() + space
@@ -724,20 +713,6 @@ def mainRun(userdata):
                 e = re.sub('E', '', edict['epen'])
                 ef = "Episode " + str(int(e))
                 season = sf + " - " + ef + space
-            if edict['epcredits'] is not None:
-                cast = "Cast: "
-                castlist = ""
-                prev = None
-                EPcastList = []
-                for c in edict['epcredits']:
-                    EPcastList.append(c['name'])
-                for g in EPcastList:
-                    if prev is None:
-                        castlist = g
-                        prev = g
-                    else:
-                        castlist = castlist + ", " + g
-                cast = cast + castlist + space
             if edict['epshow'] is not None:
                 prog = edict['epshow'] + space
             if edict['eptitle'] is not None:
