@@ -380,8 +380,11 @@ def mainRun(userdata):
                                 if epgenre != '0':
                                    if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict, epgenre, useHex)
+                                   elif edict['epfilter'] is not None:
+                                        genreNewList = edict['epfilter']
+                                   if genreNewList is not None and genreNewList != '':
                                         for genre in genreNewList:
-                                            genre = html.escape(genre, quote=True)
+                                            genre = html.escape(genre.replace('filter-', ''), quote=True)
                                             fh.write(f'\t\t<category lang=\"en\">{genre}</category>\n')
                                 fh.write("\t</programme>\n")
                                 episodeCount += 1
