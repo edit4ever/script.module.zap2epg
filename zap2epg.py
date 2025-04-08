@@ -366,6 +366,14 @@ def mainRun(userdata):
                                     fh.write(f'\t\t<rating>\n\t\t\t<value>{edict["eprating"]}</value>\n\t\t</rating>\n')
                                 if edict['epstar'] is not None:
                                     fh.write(f'\t\t<star-rating>\n\t\t\t<value>{edict["epstar"]}/4</value>\n\t\t</star-rating>\n')
+                                if edict['epcredits'] is not None:
+                                   fh.write("\t\t<credits>\n")
+                                   for c in edict['epcredits']:
+                                        if c['assetId'] is not None:
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '" src="https://zap2it.tmsimg.com/assets/' + c['assetId'] + '">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
+                                        else:
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
+                                   fh.write("\t\t</credits>\n")
                                 if edict['eptags'] is not None:
                                    if 'CC' in edict['eptags']:
                                         fh.write('\t\t<subtitles type="teletext" />\n')
