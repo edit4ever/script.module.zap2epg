@@ -369,8 +369,8 @@ def mainRun(userdata):
                                 if edict['epcredits'] is not None:
                                    fh.write("\t\t<credits>\n")
                                    for c in edict['epcredits']:
-                                        if c['assetId'] is not None:
-                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '" src="https://zap2it.tmsimg.com/assets/' + c['assetId'] + '">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
+                                        if c['assetId'] is not None and c['assetId'] != '':
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '" src="https://zap2it.tmsimg.com/assets/' + c['assetId'] + '.jpg">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
                                         else:
                                             fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
                                    fh.write("\t\t</credits>\n")
