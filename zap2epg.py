@@ -328,6 +328,8 @@ def mainRun(userdata):
                                     if edict['epdesc'] is not None:
                                         epdesc = html.escape(f"{edict['epdesc']}\nLang: {lang}", quote=True)
                                         fh.write(f'\t\t<desc lang="{lang}">{epdesc}</desc>\n')
+                                if edict['eplength'] is not None:
+                                    fh.write('\t\t<length units="minutes">' + edict['eplength'] + '</length>\n')
                                 if edict['epsn'] is not None and edict['epen'] is not None:
                                     fh.write(f'\t\t<episode-num system=\"onscreen\">S{edict["epsn"].zfill(2)}E{edict["epen"].zfill(2)}</episode-num>\n')
                                     fh.write(f'\t\t<episode-num system=\"xmltv_ns\">{str(int(edict["epsn"])-1)}.{str(int(edict["epen"])-1)}.</episode-num>\n')
@@ -352,19 +354,37 @@ def mainRun(userdata):
                                         fh.write(f'start=\"{convTime(edict["epoad"])} {TZoffset}\" ')
                                     fh.write("/>\n")
                                 if edict['epflag'] is not None:
-                                    if 'New' in edict['epflag']:
-                                        fh.write("\t\t<new />\n")
+                                    if 'Finale' in edict['epflag']:
+                                        fh.write("\t\t<last-chance />\n")
                                     if 'Live' in edict['epflag']:
                                         fh.write("\t\t<live />\n")
+                                    if 'New' in edict['epflag']:
+                                        fh.write("\t\t<new />\n")
+                                    if 'Premiere' in edict['epflag']:
+                                        fh.write("\t\t<premiere />\n")
                                 if edict['eprating'] is not None:
                                     fh.write(f'\t\t<rating>\n\t\t\t<value>{edict["eprating"]}</value>\n\t\t</rating>\n')
                                 if edict['epstar'] is not None:
                                     fh.write(f'\t\t<star-rating>\n\t\t\t<value>{edict["epstar"]}/4</value>\n\t\t</star-rating>\n')
+                                if edict['epcredits'] is not None:
+                                   fh.write("\t\t<credits>\n")
+                                   for c in edict['epcredits']:
+                                        if c['assetId'] is not None and c['assetId'] != '':
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '" src="https://zap2it.tmsimg.com/assets/' + c['assetId'] + '.jpg">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
+                                        else:
+                                            fh.write('\t\t\t<' + c['role'].lower() + ' role="' + html.escape(c['characterName'], quote=True) + '">' + html.escape(c['name'], quote=True) + '</' + c['role'].lower() + '>\n')
+                                   fh.write("\t\t</credits>\n")
+                                if edict['eptags'] is not None:
+                                   if 'CC' in edict['eptags']:
+                                        fh.write('\t\t<subtitles type="teletext" />\n')
                                 if epgenre != '0':
                                    if edict['epfilter'] is not None and edict['epgenres'] is not None:
                                         genreNewList = genreSort(edict, epgenre, useHex)
+                                   elif edict['epfilter'] is not None:
+                                        genreNewList = edict['epfilter']
+                                   if genreNewList is not None and genreNewList != '':
                                         for genre in genreNewList:
-                                            genre = html.escape(genre, quote=True)
+                                            genre = html.escape(genre.replace('filter-', ''), quote=True)
                                             fh.write(f'\t\t<category lang=\"en\">{genre}</category>\n')
                                 fh.write("\t</programme>\n")
                                 episodeCount += 1
@@ -682,17 +702,6 @@ def mainRun(userdata):
                 myear = "Released: " + edict['epyear'] + space
             if edict['eprating'] is not None:
                 ratings = edict['eprating'] + space
-            if edict['epflag'] != []:
-                flagList = edict['epflag']
-                new = ' - '.join(flagList).upper() + space
-            #if edict['epnew'] is not None:
-                #new = edict['epnew'] + space
-            #if edict['eplive'] is not None:
-                #new = edict['eplive'] + space
-            #if edict['epprem'] is not None:
-                #new = edict['epprem'] + space
-            #if edict['epfin'] is not None:
-                #new = edict['epfin'] + space
             if edict['eptags'] != []:
                 tagsList = edict['eptags']
                 cc = ' | '.join(tagsList).upper() + space
@@ -704,20 +713,6 @@ def mainRun(userdata):
                 e = re.sub('E', '', edict['epen'])
                 ef = "Episode " + str(int(e))
                 season = sf + " - " + ef + space
-            if edict['epcredits'] is not None:
-                cast = "Cast: "
-                castlist = ""
-                prev = None
-                EPcastList = []
-                for c in edict['epcredits']:
-                    EPcastList.append(c['name'])
-                for g in EPcastList:
-                    if prev is None:
-                        castlist = g
-                        prev = g
-                    else:
-                        castlist = castlist + ", " + g
-                cast = cast + castlist + space
             if edict['epshow'] is not None:
                 prog = edict['epshow'] + space
             if edict['eptitle'] is not None:
