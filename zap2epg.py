@@ -81,6 +81,7 @@ def mainRun(userdata):
     userLangid = False
     useLang = False
     useHex = 0
+    useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0"
 
     for setting in settingsDict:
         if setting == 'slist':                              #station list from gracenote website i.e. 100105
@@ -130,6 +131,8 @@ def mainRun(userdata):
             userLangid = settingsDict[setting]
             userLangid = {'0': 'en', '1': 'es', '2': 'fr'}.get(userLangid)
             if userLangid is None: userLangid = 'en'
+        if setting == 'useragent':                          #HTTP header user-agent for web requests disctionnary
+            useragent = settingsDict[setting]
         if setting == 'useLang':                            #Language to use if LangID is not used or can't determine language [em, es, fr, de, etc...]
             useLang = settingsDict[setting] 
         if setting == 'useHex':                             #0: Returns a string respresentation of the genre text    1: Returns a hex value for the genre
@@ -557,7 +560,7 @@ def mainRun(userdata):
                                     data = 'programSeriesID=' + EPseries
                                     data_encode = data.encode('utf-8')
                                     try:
-                                        URLcontent = urllib.request.Request(url, data=data_encode)
+                                        URLcontent = urllib.request.Request(url, data=data_encode, headers={'User-Agent': useragent})
                                         JSONcontent = urllib.request.urlopen(URLcontent).read()
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
@@ -755,7 +758,8 @@ def mainRun(userdata):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
                     url = f"https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
-                    saveContent = urllib.request.urlopen(url).read()
+                    req = urllib.request.Request(url, data=None, headers={'User-Agent': useragent})
+                    saveContent = urllib.request.urlopen(req).read()
                     savepage(fileDir, saveContent)
                 except:
                     logging.warning('Could not download guide data for: %s', str(gridtime))
