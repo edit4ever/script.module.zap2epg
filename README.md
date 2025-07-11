@@ -12,7 +12,7 @@ Setup:
 5. Setup the zap2epg grabber in tvheadend
 6. Enjoy your new EPG!
 
-Language identification is accomplished through a python module 'LandId'.  This module does not have to be installed inside the Kodi interpreter but must be installed in on the device machine.
+Language identification is accomplished through a python module 'LangId'.  This module does not have to be installed inside the Kodi interpreter but must be installed in on the device machine.
 For debian based machines
 1.  sudo apt-get update
 2.  sudo apt-get install pip (if not already installed)
