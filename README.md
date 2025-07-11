@@ -19,7 +19,7 @@ For debian based machines
 3.  sudo apt-get install python3-numpy
 4.  pip install langid
 
-If you try to install langid befoure installying numpy, you may get an error as the langid tries to install it but cannot find the required files.
+If you try to install langid befoure installing numpy, you may get an error as the langid tries to install it but cannot find the required files.
 
 The setting "Use Hex values for genre type instead of textual name" will use the hex values from http://www.etsi.org/deliver/etsi_en/300400_300499/300468/01.11.01_60/en_300468v011101p.pdf
 Both Kodi and TVH use those categories as their genre groups.  Kodi understands and stores the genre information as a hex value.  As of now, I can't figure out how to get TVH to recognize the genre hex values.
