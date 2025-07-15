@@ -50,8 +50,9 @@
     <setting label="32046" enable="eq(-3,true)" type="number" id="tvhport" default="9981"/>
     <setting label="32041" enable="eq(-4,true)" type="text" id="usern" default=""/>
     <setting label="32042" enable="eq(-5,true)" type="text" id="passw" default=""/>
-    <setting label="32043" enable="eq(-6,true)" type="bool" id="chmatch" default="true"/>
-    <setting label="32044" enable="eq(-7,true)" type="bool" id="tvhmatch" default="true"/>
+    <setting label="32047" enable="eq(-6,true)" type="bool" id="digest" default="false"/>
+    <setting label="32043" enable="eq(-7,true)" type="bool" id="chmatch" default="true"/>
+    <setting label="32044" enable="eq(-8,true)" type="bool" id="tvhmatch" default="true"/>
   </category>
   <category label="32001">
     <setting label="32002" type="text" id="zipcode" default=""/>

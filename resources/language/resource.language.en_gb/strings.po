@@ -160,7 +160,11 @@ msgctxt "#32046"
 msgid "Tvheadend Port"
 msgstr ""
 
-# 32047-32048 blank
+msgctxt "#32047"
+msgid "Use DIGEST authentication (more secure - requires TVH server setting change)"
+msgstr ""
+
+# 32048 blank
 
 msgctxt "#32049"
 msgid "Tvheadend Options Enabled"
@@ -287,7 +291,7 @@ msgid "Plot Description"
 msgstr ""
 
 msgctxt "#32304"
-msgid "New/Live Indicator"
+msgid "New/Live/Premiere Indicator"
 msgstr ""
 
 msgctxt "#32305"
@@ -295,7 +299,7 @@ msgid "HD Indicator"
 msgstr ""
 
 msgctxt "#32306"
-msgid "CC Indicator"
+msgid "STEREO/CC/DVS Indicator"
 msgstr ""
 
 msgctxt "#32307"
