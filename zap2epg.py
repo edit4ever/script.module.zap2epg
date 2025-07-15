@@ -15,15 +15,16 @@
 ################################################################################
 
 import urllib.request, urllib.error, urllib.parse
+import os
+from logger import createLogger, logger
 from tvh import tvh_connect, tvh_getData
 from genre import genreSort, countGenres
+from  tvlistings import create_opener, fetch_url, returnSite
 import codecs
 import time
 import datetime
 import calendar
 import gzip
-import os
-import logging
 import re
 import json
 import xml.etree.ElementTree as ET
@@ -46,7 +47,7 @@ def mainRun(userdata):
     settingsDict = {}
     xdescOrderDict = {}
     kodiVersion = root.attrib.get('version')
-    logging.info('Kodi settings version is: %s', kodiVersion)
+    logger.info('Kodi settings version is: %s', kodiVersion)
     for setting in root.findall('setting'):
         if kodiVersion == '2':
             settingStr = setting.text
@@ -73,6 +74,7 @@ def mainRun(userdata):
     tvhport = "9981"
     usern = ""
     passw = ""
+    digest = False
     chmatch = False
     tvhmatch = False
     safetitle = False
@@ -81,10 +83,9 @@ def mainRun(userdata):
     userLangid = False
     useLang = False
     useHex = 0
-    useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0"
 
     for setting in settingsDict:
-        if setting == 'slist':                              #station list from gracenote website i.e. 100105
+        if setting == 'slist':                              #station list from zap2it website i.e. 100105
             stationList = settingsDict[setting]
         if setting == 'zipcode':                            #zipcode
             zipcode = settingsDict[setting]
@@ -92,7 +93,7 @@ def mainRun(userdata):
             lineup = settingsDict[setting]
         if setting == 'lineupcode':                         #Lineup Code [string default==lineupid]
             lineupcode = settingsDict[setting]
-        if setting == 'device':                             #Device name to be sent to gracenote website
+        if setting == 'device':                             #Device name to be sent to zap2it website
             device = settingsDict[setting]
         if setting == 'days':                               #Number of days to download data (1 to 14)
             days = settingsDict[setting]
@@ -116,6 +117,8 @@ def mainRun(userdata):
             usern = settingsDict[setting]
         if setting == 'passw':                              #TV Headend password (string)
             passw = settingsDict[setting]
+        if setting == 'digest':                             #TV Headend digest authentication or plain text for TVH (string)
+            digest = True if settingsDict[setting] == 'true' else False         
         if setting == 'chmatch':                            #Append Subchannel Number for OTA" [True, False]
             chmatch = settingsDict[setting]
         if setting == 'tvhmatch':                           #Append Tvheadend Service Name [True, False]
@@ -131,8 +134,6 @@ def mainRun(userdata):
             userLangid = settingsDict[setting]
             userLangid = {'0': 'en', '1': 'es', '2': 'fr'}.get(userLangid)
             if userLangid is None: userLangid = 'en'
-        if setting == 'useragent':                          #HTTP header user-agent for web requests disctionnary
-            useragent = settingsDict[setting]
         if setting == 'useLang':                            #Language to use if LangID is not used or can't determine language [em, es, fr, de, etc...]
             useLang = settingsDict[setting] 
         if setting == 'useHex':                             #0: Returns a string respresentation of the genre text    1: Returns a hex value for the genre
@@ -147,8 +148,8 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logging.info('Running zap2epg-2.1.1 for zipcode: %s and lineup: %s', zipcode, lineup)
-    logging.info(f'langid installed: {useLangid}')
+    logger.info('Running zap2epg-2.1.1 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logger.info(f'langid installed: {useLangid}')
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
     dayHours = int(days) * 8 # set back to 8 when done testing
@@ -176,26 +177,26 @@ def mainRun(userdata):
         except:
                 return userLangid   #If there is an error, return the default language
 
-    def tvhMatchGet():
+    def tvhMatchGet():  #Routine will match the EPG station name to TVH station name or channel number
         if isConnectedtoTVH == True:
-            response = tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]')
-            if response.status_code == 200:
-                logging.info('Accessing Tvheadend channel list from: %s', tvhurl)
+            response = tvh_getData('channels')  #returns a json file
+            if response is not None:
+                logger.info(f'Accessing Tvheadend channel list from: {tvhurl}')
                 try:
-                    channels = json.loads(response.content)
+                    channels = response
                     for ch in channels['entries']:
                         channelName = ch['name']
                         channelNum = ch['number']
                         tvhMatchDict[channelNum] = channelName
-                    logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
+                    logger.info(f'{str(len(tvhMatchDict))} Tvheadend channels found.')
                 except:
-                    logging.exception('Exception: tvhMatch - %s', f'Error parsing JSON response')
+                    logger.exception('Exception: tvhMatch - %s', f'Error parsing JSON response')
             else:
-                logging.exception('Exception: tvhMatch - %s', f'Reqauest failed with status code {response.status_code}')
+                logger.exception('Exception: tvhMatch - %s', f'tvh returned no channels')
                 pass 
 
     def deleteOldCache(gridtimeStart):
-        logging.info('Checking for old cache files...')
+        logger.info('Checking for old cache files...')
         try:
             if os.path.exists(cacheDir):
                 entries = os.listdir(cacheDir)
@@ -206,14 +207,14 @@ def mainRun(userdata):
                         if (int(oldfile)) < (gridtimeStart + (int(redays) * 86400)):
                             try:
                                 os.remove(fn)
-                                logging.info('Deleting old cache: %s', entry)
+                                logger.info('Deleting old cache: %s', entry)
                             except OSError as e:
-                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logger.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
-            logging.exception('Exception: deleteOldCache - %s', e.strerror)
+            logger.exception('Exception: deleteOldCache - %s', e.strerror)
 
     def deleteOldShowCache(showList):
-        logging.info('Checking for old show cache files...')
+        logger.info('Checking for old show cache files...')
         try:
             if os.path.exists(cacheDir):
                 entries = os.listdir(cacheDir)
@@ -224,11 +225,11 @@ def mainRun(userdata):
                         if oldfile not in showList:
                             try:
                                 os.remove(fn)
-                                logging.info('Deleting old show cache: %s', entry)
+                                logger.info('Deleting old show cache: %s', entry)
                             except OSError as e:
-                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                logger.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
         except Exception as e:
-            logging.exception('Exception: deleteOldshowCache - %s', e.strerror)
+            logger.exception('Exception: deleteOldshowCache - %s', e.strerror)
 
     def convTime(t):
         return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))
@@ -242,10 +243,10 @@ def mainRun(userdata):
             f.close()
 
     def printHeader(fh, enc):           #This is the header for the XMLTV file
-        logging.info('Creating xmltv.xml file...')
+        logger.info('Creating xmltv.xml file...')
         fh.write(f'<?xml version=\"1.0\" encoding=\"{enc}\"?>\n')
         #fh.write("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n")
-        fh.write("<tv source-info-url=\"http://tvschedule.gracenote.com/\" source-info-name=\"gracenote.com\">\n")
+        fh.write(f'<tv source-info-url=\"{returnSite()}\">\n')
 
     def printFooter(fh):                #This is the footer for the XMLTV file
         fh.write("</tv>")
@@ -254,7 +255,7 @@ def mainRun(userdata):
         global stationCount
         stationCount = 0
         try:
-            logging.info('Writing Stations to xmltv.xml file...')
+            logger.info('Writing Stations to xmltv.xml file...')
             try:
                 scheduleSort = OrderedDict(sorted(iter(schedule.items()), key=lambda x: x[1]['chnum']))
             except:
@@ -283,15 +284,15 @@ def mainRun(userdata):
                 fh.write("\t</channel>\n")
                 stationCount += 1
         except Exception as e:
-            logging.exception('Exception: printStations')
+            logger.exception('Exception: printStations')
 
-    def printEpisodes(fh):                  #Take the data collected in edict variable and parse it, to writhe the XMLTV file
+    def printEpisodes(fh):                  #Take the data collected in edict variable and parse it, to write the XMLTV file
         global episodeCount
         episodeCount = 0
         try:
-            logging.info('Writing Episodes to xmltv.xml file...')
+            logger.info('Writing Episodes to xmltv.xml file...')
             if xdesc is True:
-                logging.info('Appending Xdetails to description for xmltv.xml file...')
+                logger.info('Appending Xdetails to description for xmltv.xml file...')
             for station in schedule:
                 sdict = schedule[station]
                 for episode in sdict:
@@ -386,20 +387,21 @@ def mainRun(userdata):
                                    elif edict['epfilter'] is not None:
                                         genreNewList = edict['epfilter']
                                    if genreNewList is not None and genreNewList != '':
+
                                         for genre in genreNewList:
                                             genre = html.escape(genre.replace('filter-', ''), quote=True)
                                             fh.write(f'\t\t<category lang=\"en\">{genre}</category>\n')
                                 fh.write("\t</programme>\n")
                                 episodeCount += 1
                         except Exception as e:
-                            logging.exception('No data for episode %s:', episode)
+                            logger.exception('No data for episode %s:', episode)
                             #fn = os.path.join(cacheDir, episode + '.json')
                             #os.remove(fn)
-                            #logging.info('Deleting episode %s:', episode)
+                            #logger.info('Deleting episode %s:', episode)
         except Exception as e:
-            logging.exception('Exception: printEpisodes')
+            logger.exception('Exception: printEpisodes')
 
-    def xmltv():            # Routine called after the data has been collected from gracenote website
+    def xmltv():            # Routine called after the data has been collected from zap2it website
         try:
             enc = 'UTF-8'
             outFile = os.path.join(userdata, 'xmltv.xml')
@@ -410,9 +412,9 @@ def mainRun(userdata):
             printFooter(fh)
             fh.close()
         except Exception as e:
-            logging.exception('Exception: xmltv')
+            logger.exception('Exception: xmltv')
 
-    def parseStations(content):     #Routine downloads the necessary files from gracenote website.
+    def parseStations(content):     #Routine downloads the necessary files from zap2it website.
         try:
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
@@ -425,7 +427,7 @@ def mainRun(userdata):
                         schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
                         chnumStart = station.get('channelNo')
                         if '.' not in chnumStart and chmatch == 'true' and chName is not None:
-                            chsub = re.search('(\d+)$', chName)
+                            chsub = re.search(r'(\d+)$', chName)
                             if chsub is not None:
                                 chnumUpdate = chnumStart + '.' + chsub.group(0)
                             else:
@@ -445,7 +447,7 @@ def mainRun(userdata):
                     schedule[skey]['chicon'] = station.get('thumbnail').split('?')[0]
                     chnumStart = station.get('channelNo')
                     if '.' not in chnumStart and chmatch == 'true' and chName is not None:
-                        chsub = re.search('(\d+)$', chName)
+                        chsub = re.search(r'(\d+)$', chName)
                         if chsub is not None:
                             chnumUpdate = chnumStart + '.' + chsub.group(0)
                         else:
@@ -459,7 +461,7 @@ def mainRun(userdata):
                         else:
                             schedule[skey]['chtvh'] = None
         except Exception as e:
-            logging.exception('Exception: parseStations')
+            logger.exception('Exception: parseStations')
 
     def parseEpisodes(content):
         CheckTBA = "Safe"
@@ -535,7 +537,7 @@ def mainRun(userdata):
                             if "TBA" in schedule[skey][epkey]['eptitle']:
                                 CheckTBA = "Unsafe"
         except Exception as e:
-            logging.exception('Exception: parseEpisodes')
+            logger.exception('Exception: parseEpisodes')
         return CheckTBA
 
     def parseXdetails():
@@ -555,13 +557,14 @@ def mainRun(userdata):
                             if not os.path.exists(fileDir) and EPseries not in failList:
                                 retry = 3
                                 while retry > 0:
-                                    logging.info('Downloading details data for: %s', EPseries)
-                                    url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
+                                    logger.info('Downloading details data for: %s', EPseries)
+                                    #url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     data_encode = data.encode('utf-8')
                                     try:
-                                        URLcontent = urllib.request.Request(url, data=data_encode, headers={'User-Agent': useragent})
-                                        JSONcontent = urllib.request.urlopen(URLcontent).read()
+                                        #URLcontent = urllib.request.Request(url, data=data_encode)
+                                        URLcontent = fetch_url('programDetails', {'data_encode': data_encode})
+                                        JSONcontent = json.dumps(json.loads(URLcontent)).encode('utf-8')
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
@@ -570,18 +573,18 @@ def mainRun(userdata):
                                         else:
                                             time.sleep(1)
                                             retry -= 1
-                                            logging.warning('Retry downloading missing details data for: %s', EPseries)
-                                    except urllib.error.URLError as e:
+                                            logger.warning('Retry downloading missing details data for: %s', EPseries)
+                                    except Exception as e:
                                         time.sleep(1)
                                         retry -= 1
-                                        logging.warning('Retry downloading details data for: %s  -  %s', EPseries, e)
+                                        logger.warning('Retry downloading details data for: %s  -  %s', EPseries, e)
                             if os.path.exists(fileDir):
                                 fileSize = os.path.getsize(fileDir)
                                 if fileSize > 0:
                                     with open(fileDir, 'rb') as f:
                                         EPdetails = json.loads(f.read())
                                         f.close()
-                                    logging.info('Parsing %s', filename)
+                                    logger.info('Parsing %s', filename)
                                     edict['epimage'] = EPdetails.get('seriesImage')
                                     edict['epfan'] = EPdetails.get('backgroundImage')
                                     EPgenres = EPdetails.get('seriesGenres')
@@ -601,30 +604,30 @@ def mainRun(userdata):
                                                         EPoad = re.sub('Z', ':00Z', airing.get('originalAirDate'))
                                                         edict['epoad'] = str(calendar.timegm(time.strptime(EPoad, '%Y-%m-%dT%H:%M:%SZ')))
                                                 except Exception as e:
-                                                    logging.exception('Could not parse oad for: %s - %s', episode, e)
+                                                    logger.exception('Could not parse oad for: %s - %s', episode, e)
                                                 try:
                                                     TBAcheck = airing.get('episodeTitle')
                                                     if TBAcheck != '':
                                                         if "TBA" in TBAcheck:
                                                             try:
                                                                 os.remove(fileDir)
-                                                                logging.info('Deleting %s due to TBA listings', filename)
+                                                                logger.info('Deleting %s due to TBA listings', filename)
                                                                 showList.remove(edict['epseries'])
                                                             except OSError as e:
-                                                                logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                                                                logger.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                                                 except Exception as e:
-                                                    logging.exception('Could not parse TBAcheck for: %s - %s', episode, e)
+                                                    logger.exception('Could not parse TBAcheck for: %s - %s', episode, e)
                                 else:
-                                    logging.warning('Could not parse data for: %s - deleting file', filename)
+                                    logger.warning('Could not parse data for: %s - deleting file', filename)
                                     os.remove(fileDir)
                             else:
-                                logging.warning('Could not download details data for: %s - skipping episode', episode)
+                                logger.warning('Could not download details data for: %s - skipping episode', episode)
                                 failList.append(EPseries)
                         except Exception as e:
-                            logging.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
+                            logger.exception('Could not parse data for: %s - deleting file  -  %s', episode, e)
                             #os.remove(fileDir)
         except Exception as e:
-            logging.exception('Exception: parseXdetails')
+            logger.exception('Exception: parseXdetails')
         return showList
 
     def addXDetails(edict):
@@ -707,9 +710,12 @@ def mainRun(userdata):
                 ratings = edict['eprating'] + space
             if edict['eptags'] != []:
                 tagsList = edict['eptags']
-                cc = ' | '.join(tagsList).upper() + space
+                cc = ' '.join(tagsList).upper() + space
             #if edict['ephd'] is not None:
                 #hd = edict['ephd'] + space
+            if edict['epflag'] != []:
+                flagList = edict['epflag']
+                new = ' '.join(flagList).upper() + space
             if edict['epsn'] is not None and edict['epen'] is not None:
                 s = re.sub('S', '', edict['epsn'])
                 sf = "Season " + str(int(s))
@@ -734,20 +740,17 @@ def mainRun(userdata):
             descsort = "".join(makeDescsortList(xdescOrder))
             return descsort
         except Exception as e:
-            logging.exception('Exception: addXdetails to description')
-
-    def connect_to_TVH():
-        global isConnectedtoTVH 
-        isConnectedtoTVH = True if tvh_connect(tvhurl, tvhport, usern, passw) is not None else False
+            logger.exception('Exception: addXdetails to description')
     
-    connect_to_TVH()
+    isConnectedtoTVH = tvh_connect(tvhurl, tvhport, usern, passw, digest)
+
     try:
         if not os.path.exists(cacheDir):
             os.mkdir(cacheDir)
         count = 0
         gridtime = gridtimeStart
         if stationList is None:
-            logging.info('No channel list found - adding all stations!')
+            logger.info('No channel list found - adding all stations!')
         if tvhoff == 'true' and tvhmatch == 'true':
             tvhMatchGet()
         deleteOldCache(gridtimeStart)
@@ -756,52 +759,55 @@ def mainRun(userdata):
             fileDir = os.path.join(cacheDir, filename)
             if not os.path.exists(fileDir):
                 try:
-                    logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = f"https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
-                    req = urllib.request.Request(url, data=None, headers={'User-Agent': useragent})
-                    saveContent = urllib.request.urlopen(req).read()
+                    logger.info('Downloading guide data for: %s', str(gridtime))
+                    #url = f"https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
+                    options = {'lineupcode': lineupcode, 'country': country, 'device': device, 'zipcode': zipcode, 'gridtime': str(gridtime)}
+                    saveContent = fetch_url('lineup', options)
+                    #saveContent = urllib.request.urlopen(url).read()
                     savepage(fileDir, saveContent)
                 except:
-                    logging.warning('Could not download guide data for: %s', str(gridtime))
-                    logging.warning('URL: %s', url)
+                    logger.warning('Could not download guide data for: %s', str(gridtime))
+                    logger.warning('URL: %s', options)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:
                         content = f.read()
                         f.close()
-                    logging.info('Parsing %s', filename)
+                    logger.info('Parsing %s', filename)
                     if count == 0:
                         parseStations(content)
                     TBAcheck = parseEpisodes(content)
                     if TBAcheck == "Unsafe":
                         try:
                             os.remove(fileDir)
-                            logging.info('Deleting %s due to TBA listings', filename)
+                            logger.info('Deleting %s due to TBA listings', filename)
                         except OSError as e:
-                            logging.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
+                            logger.warning('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                 except:
-                    logging.warning('JSON file error for: %s - deleting file', filename)
+                    logger.warning('JSON file error for: %s - deleting file', filename)
                     os.remove(fileDir)
             count += 1
             gridtime = gridtime + 10800
         if xdetails == 'true':
             showList = parseXdetails()
         else:
-            showList = []
+            showList = [] 
         xmltv()
         deleteOldShowCache(showList)
         timeRun = round((time.time() - pythonStartTime),2)
-        logging.info('zap2epg completed in %s seconds. ', timeRun)
-        logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
+        logger.info('zap2epg completed in %s seconds. ', timeRun)
+        logger.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
         counter = dict(sorted(Counter(countGenres()).items()))
         for cnt in counter:
-            logging.info(cnt + ": " + str(counter[cnt]))        
+            logger.info(cnt + ": " + str(counter[cnt]))        
         return timeRun, stationCount, episodeCount
     except Exception as e:
-        logging.exception('Exception: main')
+        logger.exception('Exception: main - %s',e)
 
 if __name__ == '__main__':
     userdata = os.getcwd()
     log = os.path.join(userdata, 'zap2epg.log')
-    logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
+    createLogger(log)
+    logger.info("zap2epg.py is started executing")
+    create_opener() #create the connection to the website for EPG data
     mainRun(userdata)

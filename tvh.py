@@ -14,87 +14,136 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-import requests
-from requests.auth import HTTPDigestAuth, HTTPBasicAuth
-import logging
+import urllib.request
+from urllib.request import HTTPDigestAuthHandler, build_opener
+from urllib.error import URLError, HTTPError
+import base64
+from logger import logger
+import json
 
-connection_info = {}
 isConnectedtoTVH = False
-response = ""
+hostname = ''
+port = ''
+username = ''
+password = ''
+useDigest = False
 
-def tvh_logsetup(filename, filemode, format, datefmt, level):
-    logging.basicConfig(filename=filename, filemode=filemode, format=format, datefmt=datefmt, level=level)
 
-def tvh_connect(ipaddress, port, usern, passw, tvh=None):
+def tvh_connect(ipaddress, portNumber, usern, passw, userDigest=False, tvh=None ):
 
-    connection_info.update({'ipaddress': ipaddress, 'port': port, 'user': usern, 'password': passw}) #save the connection settings
-    global response
+    #save the connection info to the global variables
+    global hostname, port, username, password, useDigest, isConnectedtoTVH
+    hostname = ipaddress
+    port = portNumber
+    username = usern
+    password = passw
+    useDigest = userDigest
 
-    def check_connection(ipaddress, port, string, firstRun: bool, useDigest):
-        global response
-        url = 'http://' + ipaddress + ':' + port + string
-        if useDigest:
-            auth = HTTPDigestAuth(usern, passw)
+    #make an initial attempt to connect to the server wiht line 49
+    def check_connection():
+        response = tvh_getData('connection') 
+        if response is not None:
+            return response
         else:
-            auth = HTTPBasicAuth(usern, passw)
-        connection_info.update({'auth': auth})
-
-        try:
-            response = requests.get(url,auth=auth)
-            connection_info.update({"response": response})
-            if useDigest:
-                if response.status_code == 401:
-                    # Wrong authorization type, possible?
-                    logging.info( 'Trying with basic authorization')
-                    check_connection(ipaddress, port, string, False, False)
-        except:
-            logging.info(f"The server {ipaddress} is unavailable")
-            # Let's try to get the IP address, username and password for the TVH PVR 
-            if firstRun:
-                ipaddress = tvh['ipaddress']
-                port = tvh['port']
-                check_connection(ipaddress, port, string, False, useDigest)
-                if response is not None:
-                    connection_info.update({'ipaddress': ipaddress, 'port': port, 'response': response})
-                    logging.info( f'The TVH PVR IP address is: {ipaddress} and port is: {port}.  Would you like to update this addon to use these values?')
-                else:
-                    logging.info( f'The TVH server IP address was not found or {ipaddress} is not correct.')    
-
-            
-    def raise_error(status_code):
-        if status_code == 401 or status_code == 403:
-            #dialog.ok("Tvheadend Access Error!",f"{status_code}: {tvh_url}\nAuthorization Denied\n\nPlease check your username/password in settings.")
-            logging.info( f'{status_code} Authorization denied.')
-        elif status_code != 200:
-            #dialog.ok("Tvheadend Access Error!", f"{status_code}: {tvh_url}\nCould not connect to Tvheadend server.\nPlease check your Tvheadend server is running or check the IP and port configuration in the settings.")
-            logging.info( f'{status_code} Problem with TVH Server')
-    
-    firstRun = False if tvh is None else True
-    
-    check_connection(ipaddress, port, '/api/status/connections', firstRun, True)
-    if response is not None:
-        global isConnectedtoTVH
-        logging.info( response)
-        if response.status_code != 200:
-            isConnectedtoTVH = False
-            raise_error(response.status_code)
             return None
-        else:
-            isConnectedtoTVH = True
-            return connection_info
+
+    response = check_connection()
+    
+    #read the response and respond
+    if response is not None:
+        isConnectedtoTVH = True
+        logger.info("Connected to TVH server")
+        return True       
     else:
-        logging.info( 'Nothing returned!')
-        return None
+        isConnectedtoTVH = False
+        logger.info('Nothing returned!')
+        return False
     
 def tvh_getData(string):
+    global isConnectedtoTVH
+    def digest(url): #newer encryption style
+        #header = [ ("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0"), 
+        #            ("Accept", "application/json"), 
+        #            ("Accept-Language", "en-US,en;q=0.9") ]
+        headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0", 
+                    "Accept": "application/json", 
+                     "Accept-Language": "en-US,en;q=0.9"} 
+        
+        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr.add_password(None, url, username, password)
+        digest_auth_handler = HTTPDigestAuthHandler(password_mgr)
+        #opener = build_opener(digest_auth_handler)
+        #opener.addheaders = headers
+        
+        opener = urllib.request.build_opener(digest_auth_handler)
+        request = urllib.request.Request(url, headers=headers)
+
+
+        try:
+            with opener.open(request, timeout=10) as response:
+                raw = response.read().decode('utf-8')
+                return json.loads(raw)
+        except HTTPError as e:
+            logger.info(f'Error: HTTP Error {e.code}: {e.reason}')
+            if (e.reason == 401 or e.reason == 403):
+                #dialog.ok("Tvheadend Access Error!",f"{e.reasone}: {url}\nAuthorization Denied\n\nPlease check your username/password in settings.")
+                return None
+        except URLError as e:
+            logger.info(f'Error: URL Error: {e.reason}')
+            if (e.reason != 200):
+                #dialog.ok("Tvheadend Access Error!", f"{e.reason}: {url}\nCould not connect to Tvheadend server.\nPlease check your Tvheadend server is running or check the IP and port configuration in the settings.")
+                return None
+        except json.JSONDecodeError as e:
+            logger.info(f'Error: JSON Decode Error: {e.msg}')
+            return None
+        except Exception as e:
+            logger.warning("Exception in digest authentication - %s", e)        
+
+    def basicAuth(url): #Older encryption style
+        credentials = f"{username}:{password}"
+        userpass_enc = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+        headers_basic = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0", 
+                            "Accept": "application/json", 
+                            "Accept-Language": "en-US,en;q=0.9",
+                            "Authorization": f"Basic {userpass_enc}"} 
+
+        request = urllib.request.Request(url, headers=headers_basic)
+
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                raw = response.read().decode('utf-8')
+                return json.loads(raw)
+        except HTTPError as e:
+            logger.info(f'Error: HTTP Error {e.code}: {e.reason}')
+            if (e.reason == 401 or e.reason == 403):
+                #dialog.ok("Tvheadend Access Error!",f"{e.reasone}: {url}\nAuthorization Denied\n\nPlease check your username/password in settings.")
+                return None
+        except URLError as e:
+            logger.info(f'Error: URL Error: {e.reason}')
+            if (e.reason != 200):
+                #dialog.ok("Tvheadend Access Error!", f"{e.reason}: {url}\nCould not connect to Tvheadend server.\nPlease check your Tvheadend server is running or check the IP and port configuration in the settings.")
+                return None
+        except json.JSONDecodeError as e:
+            logger.info(f'Error: JSON Decode Error: {e.msg}')
+            return None
+        except Exception as e:
+            logger.warning("Exception in basic authentication - %s", e)
+
+    #Strings used to connect to TVH and pull station listings
+    if string == 'connection':  #this py line 42
+        isConnectedtoTVH = True 
+        substring = '/api/status/connections'
+    if string == 'channels':    #default.ph  line 97
+        substring = '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
+    if string == 'allchannels':
+        substring = '/api/channel/grid?all=1&limit=999999999&sort=name'   
+
     if isConnectedtoTVH:
-        url = 'http://' + connection_info['ipaddress'] + ':' + connection_info['port'] + string
-        response = requests.get(url, auth=connection_info['auth'])
-        logging.info( response)
-        return response
+        url = f'http://{hostname}:{port}{substring}'
+        if useDigest:
+            data = digest(url)
+        else:
+            data = basicAuth(url)    
+        return data
     else:
         return None
-    
-
-#print(tvh_connect(ipaddress='192.168.0.150',port='9981',usern='osmc',passw='osmc',tvh={'ipaddress': '192.168.0.249', 'port': '9981', 'user': 'osmc', 'password': 'osmc'}))
-#print(tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name'))

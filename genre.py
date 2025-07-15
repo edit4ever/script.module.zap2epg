@@ -70,7 +70,7 @@ def genreSort(edict, userSelectedGenre, useHex):
         #make each element lowercase, romve all spaces and any 's' at the end   
         genreList = list(map(lambda x: x.lower().replace(" ", ""), genreList))
         if (len(genreList) > 0 and genreList[0] != ''):
-            genreList = list(map(lambda x: x[0:-1] if x and x[-1] == 's' else x, genreList))
+            genreList = list(map(lambda x: x[0:-1] if x[-1] == 's' else x, genreList))
         desc = f'{edict["epdesc"]} {edict["eptitle"]} {edict["epshow"]} {edict["epdesc"]}' 
         desc = desc.lower()
 

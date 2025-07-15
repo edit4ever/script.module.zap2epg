@@ -14,25 +14,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 import xbmc, xbmcaddon, xbmcvfs, xbmcgui
-from tvh import tvh_connect, tvh_getData, tvh_logsetup
-
-from xbmcswift2 import Plugin 
 import os
+from logger import createLogger, logger
+from tvh import tvh_connect, tvh_getData
+from tvlistings import create_opener, fetch_url
+from xbmcswift2 import Plugin 
 import re
-import logging
 import zap2epg
 import urllib.request, urllib.error, urllib.parse
 import json
 from collections import OrderedDict
 import time
 import datetime
-#import web_pdb; web_pdb.set_trace()
 
 userdata = xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 tvhoff = True if xbmcaddon.Addon().getSetting('tvhoff') == 'true' else False
 if not os.path.exists(userdata):
     os.mkdir(userdata)
-log = os.path.join(userdata, 'zap2epg.log')
 Clist = os.path.join(userdata, 'channels.json')
 tvhList =  os.path.join(userdata, 'TVHchannels.json')
 cacheDir = os.path.join(userdata, 'cache')
@@ -40,38 +38,21 @@ plugin = Plugin()
 dialog = xbmcgui.Dialog()
 gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
 connection = None
+create_opener #create the connection to the EPG website
 
 def connectTVH(updateSetting = False):
-    global tvhoff
+    #import web_pdb; web_pdb.set_trace()
+    global tvhoff, connection, tvh_url
     if tvhoff is True:
         tvh_url = xbmcaddon.Addon().getSetting('tvhurl')
         tvh_port = xbmcaddon.Addon().getSetting('tvhport')
         tvh_usern = xbmcaddon.Addon().getSetting('usern')
         tvh_passw = xbmcaddon.Addon().getSetting('passw')
-        
-        pvr = {}
-        try:
-            pvr['ipaddress'] = xbmcaddon.Addon('pvr.hts').getSetting("host")
-            pvr['port'] = xbmcaddon.Addon('pvr.hts').getSetting("http_port")
-            pvr['user'] = tvh_usern
-            pvr['password'] = tvh_passw
-        except:
-            pvr.clear()
-        global connection
-        connection = tvh_connect(tvh_url, tvh_port, tvh_usern, tvh_passw, pvr)
-        tvhoff = True if connection is not None else False
-        if tvhoff is True:
-            if tvh_url != connection['ipaddress']:
-                response = dialog.yesno('Update TVH Settings?', f'{tvh_url} TVH server was not found.\n\nWould you like to use the IP address found in the TVH PVR?\n{connection["ipaddress"]}')
-                if response is True:
-                    xbmcaddon.Addon().setSetting(id='tvhurl', value=connection['ipaddress'])
-                    xbmcaddon.Addon().setSetting(id='tvhport', value=connection['port'])
-                else:
-                    if updateSetting:
-                        connection = None
-                        tvhoff = False
-                        xbmcaddon.Addon().setSetting(id='tvhoff', value='false')
-        else:
+        tvh_digest = True if xbmcaddon.Addon().getSetting('digest') == 'true' else False
+
+        connection = tvh_connect(tvh_url, tvh_port, tvh_usern, tvh_passw, tvh_digest)
+        tvhoff = connection
+        if tvhoff is False:
             dialog.ok("TVHeadend Server", f'The TVH server {tvh_url} was not found or username / password was incorrect.  Please check TVH settings')
             if updateSetting:
                 connection = None
@@ -79,25 +60,28 @@ def connectTVH(updateSetting = False):
                 xbmcaddon.Addon().setSetting(id='tvhoff', value='false')
 
 def getTVHChannels():
+    #import web_pdb; web_pdb.set_trace()
     global tvhoff, connection
     if connection is None:
         connectTVH()
     if connection is not None:
-        response = tvh_getData('/api/channel/grid?all=1&limit=999999999&sort=name')
+        channels = tvh_getData('allchannels')  #returns a JSON string
         try:
-            logging.info('Accessing Tvheadend channel list from: %s', connection['ipaddress'])
-            channels = response.json()
+            logger.info('Accessing Tvheadend channel list from: %s', tvh_url)
+            #channels = response.json()
             with open(tvhList,"w") as f:
                 json.dump(channels,f)
-        except urllib.error.HTTPError as e:
-            logging.exception('Exception: tvhClist - %s', e.strerror)
+        except Exception as e:
+            logger.warning(f"Error Type: {type(e).__name__}: {e}")
             tvhoff = False
 
 def get_icon_path(icon_name):
+    #import web_pdb; web_pdb.set_trace()
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
-def create_cList():
+def create_cList(): #channel listings
+    #import web_pdb; web_pdb.set_trace()
     tvhClist = []
     if tvhoff is True and not os.path.isfile(tvhList):
         getTVHChannels()
@@ -109,8 +93,10 @@ def create_cList():
                 if channelEnabled == True:
                     tvhClist.append(ch['number'])
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
-    url = 'https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-    content = urllib.request.urlopen(url).read()
+    #url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    options = {'lineupcode': lineupcode, 'country': country, 'device': device, 'zipcode': zipcode, 'gridtime': str(gridtime)}
+    #content = urllib.request.urlopen(url).read()
+    content = fetch_url('lineup', options)
     contentDict = json.loads(content)
     stationDict = {}
     if 'channels' in contentDict:
@@ -136,8 +122,9 @@ def create_cList():
     with open(Clist,"w") as f:
         json.dump(stationDictSort,f)
 
-@plugin.route('/channels')
+@plugin.route('/channels') #Menu item Configure Channel List
 def channels():
+   # import web_pdb; web_pdb.set_trace()
     lineupcode = xbmcaddon.Addon().getSetting('lineupcode')
     if lineup is None or zipcode is None:
         dialog.ok('Location not configured!', 'Please setup your location before configuring channels.')
@@ -176,8 +163,9 @@ def channels():
         json.dump(stationDict,f)
     xbmcaddon.Addon().setSetting(id='slist', value=','.join(stationListCodes))
 
-@plugin.route('/location')
+@plugin.route('/location') #Menu item: Change Current Location 
 def location():
+    #import web_pdb; web_pdb.set_trace()
     global country
     countryPick = ['USA', 'CAN']
     countryNew = dialog.select('Select your country', list=countryPick)
@@ -190,72 +178,74 @@ def location():
     zipcodeNew = re.sub(' ', '', zipcodeNew)
     zipcodeNew = zipcodeNew.upper()
     xbmcaddon.Addon().setSetting(id='zipcode', value=zipcodeNew)
+
     if countryNew == 0:
-        country = 'USA'
-        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap/en'
+        options = {'country': 'USA', 'zipcodeNew': zipcodeNew}
+        #url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/USA/' + zipcodeNew + '/gapzap/en'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
         lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
         deviceX = ['-', '-', '-', '-', '-', '-', '-']
     if countryNew == 1:
-        country = 'CAN'
-        url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap/en'
+        options = {'country': 'CAN', 'zipcodeNew': zipcodeNew}
+        #url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/CAN/' + zipcodeNew + '/gapzap/en'
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
         deviceX = ['-', '-', '-', '-', '-']
-    content = urllib.request.urlopen(url).read()
-    lineupDict = json.loads(content)
-    if 'Providers' in lineupDict:
-        for provider in lineupDict['Providers']:
-            lineupName = provider.get('name')
-            lineupLocation = provider.get('location')
-            if lineupLocation != '':
-                lineupCombo = lineupName + '  (' + lineupLocation + ')'
-                lineupsN.append(lineupCombo)
-            else:
-                lineupsN.append(lineupName)
-            lineupsC.append(provider.get('headendId'))
-            deviceGet = provider.get('device')
-            if deviceGet == '' or deviceGet == ' ':
-                deviceGet = '-'
-            deviceX.append(deviceGet)
+    content = fetch_url('postal', options)
+    if content is not None: 
+        lineupDict = json.loads(content)
+        if 'Providers' in lineupDict:
+            for provider in lineupDict['Providers']:
+                lineupName = provider.get('name')
+                lineupLocation = provider.get('location')
+                if lineupLocation != '':
+                    lineupCombo = lineupName + '  (' + lineupLocation + ')'
+                    lineupsN.append(lineupCombo)
+                else:
+                    lineupsN.append(lineupName)
+                lineupsC.append(provider.get('headendId'))
+                deviceGet = provider.get('device')
+                if deviceGet == '' or deviceGet == ' ':
+                    deviceGet = '-'
+                deviceX.append(deviceGet)
 
+        else:
+            dialog.ok('Error - No Providers!', 'No providers were found - please check zipcode and try again.')
+            return
+        lineupSel = dialog.select('Select a lineup', list=lineupsN)
+        if lineupSel:
+            lineupSelCode = lineupsC[lineupSel]
+            lineupSelName = lineupsN[lineupSel]
+            deviceSel = deviceX[lineupSel]
+            xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
+            xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelName)
+            xbmcaddon.Addon().setSetting(id='device', value=deviceSel)
+            if os.path.exists(cacheDir):
+                entries = os.listdir(cacheDir)
+                for entry in entries:
+                    oldfile = entry.split('.')[0]
+                    if oldfile.isdigit():
+                        fn = os.path.join(cacheDir, entry)
+                        try:
+                            os.remove(fn)
+                        except:
+                            pass
+            xbmc.executebuiltin('Container.Refresh')
+        else:
+            xbmc.executebuiltin('Container.Refresh')
+            return
     else:
-        dialog.ok('Error - No Providers!', 'No providers were found - please check zipcode and try again.')
-        return
-    lineupSel = dialog.select('Select a lineup', list=lineupsN)
-    if lineupSel:
-        lineupSelCode = lineupsC[lineupSel]
-        lineupSelName = lineupsN[lineupSel]
-        deviceSel = deviceX[lineupSel]
-        xbmcaddon.Addon().setSetting(id='lineupcode', value=lineupSelCode)
-        xbmcaddon.Addon().setSetting(id='lineup', value=lineupSelName)
-        xbmcaddon.Addon().setSetting(id='device', value=deviceSel)
-        if os.path.exists(cacheDir):
-            entries = os.listdir(cacheDir)
-            for entry in entries:
-                oldfile = entry.split('.')[0]
-                if oldfile.isdigit():
-                    fn = os.path.join(cacheDir, entry)
-                    try:
-                        os.remove(fn)
-                    except:
-                        pass
-        xbmc.executebuiltin('Container.Refresh')
-    else:
-        xbmc.executebuiltin('Container.Refresh')
-        return
+        return    
 
-@plugin.route('/run')
+@plugin.route('/run')  #Menu item:  Run zap2epg and Update Guide Data
 def run():
-    logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
-    tvh_logsetup(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
+    #import web_pdb; web_pdb.set_trace()
     status = zap2epg.mainRun(userdata)
     dialog.ok('zap2epg Finished!', 'zap2epg completed in ' + str(status[0]) + ' seconds.\n' + str(status[1]) + ' Stations and ' + str(status[2]) + ' Episodes written to xmltv.xml file.')
 
-
-
-@plugin.route('/open_settings')
+@plugin.route('/open_settings') #Menu item Configure Settings and Options
 def open_settings():
+    #import web_pdb; web_pdb.set_trace()
     plugin.open_settings() 
     global tvhoff, connection
     # Test the connection to TVH if tvhoff is true
@@ -303,6 +293,9 @@ def index():
 
 
 if __name__ == '__main__':
+    log = os.path.join(userdata, 'zap2epg.log')
+    createLogger(log)
+    logger.info("We have connected to the logging program!")
     try:
         zipcode = xbmcaddon.Addon().getSetting('zipcode')
         if zipcode.isdigit():
