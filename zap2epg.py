@@ -740,7 +740,7 @@ def mainRun(userdata):
             return descsort
         except Exception as e:
             logger.exception('Exception: addXdetails to description')
-    
+
     isConnectedtoTVH = tvh_connect(tvhurl, tvhport, usern, passw, digest)
 
     try:
