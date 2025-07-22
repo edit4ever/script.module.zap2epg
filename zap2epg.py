@@ -85,7 +85,7 @@ def mainRun(userdata):
     useHex = 0
 
     for setting in settingsDict:
-        if setting == 'slist':                              #station list from zap2it website i.e. 100105
+        if setting == 'slist':                              #station list from gracenote website i.e. 100105
             stationList = settingsDict[setting]
         if setting == 'zipcode':                            #zipcode
             zipcode = settingsDict[setting]
@@ -93,7 +93,7 @@ def mainRun(userdata):
             lineup = settingsDict[setting]
         if setting == 'lineupcode':                         #Lineup Code [string default==lineupid]
             lineupcode = settingsDict[setting]
-        if setting == 'device':                             #Device name to be sent to zap2it website
+        if setting == 'device':                             #Device name to be sent to gracenote website
             device = settingsDict[setting]
         if setting == 'days':                               #Number of days to download data (1 to 14)
             days = settingsDict[setting]
@@ -118,7 +118,7 @@ def mainRun(userdata):
         if setting == 'passw':                              #TV Headend password (string)
             passw = settingsDict[setting]
         if setting == 'digest':                             #TV Headend digest authentication or plain text for TVH (string)
-            digest = True if settingsDict[setting] == 'true' else False         
+            digest = True if settingsDict[setting] == 'true' else False
         if setting == 'chmatch':                            #Append Subchannel Number for OTA" [True, False]
             chmatch = settingsDict[setting]
         if setting == 'tvhmatch':                           #Append Tvheadend Service Name [True, False]
@@ -148,7 +148,7 @@ def mainRun(userdata):
         country = 'USA'
     else:
         country = 'CAN'
-    logger.info('Running zap2epg-2.1.1 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logger.info('Running zap2epg-2.2.1 for zipcode: %s and lineup: %s', zipcode, lineup)
     logger.info(f'langid installed: {useLangid}')
     pythonStartTime = time.time()
     cacheDir = os.path.join(userdata, 'cache')
@@ -193,7 +193,7 @@ def mainRun(userdata):
                     logger.exception('Exception: tvhMatch - %s', f'Error parsing JSON response')
             else:
                 logger.exception('Exception: tvhMatch - %s', f'tvh returned no channels')
-                pass 
+                pass
 
     def deleteOldCache(gridtimeStart):
         logger.info('Checking for old cache files...')
@@ -387,7 +387,6 @@ def mainRun(userdata):
                                    elif edict['epfilter'] is not None:
                                         genreNewList = edict['epfilter']
                                    if genreNewList is not None and genreNewList != '':
-
                                         for genre in genreNewList:
                                             genre = html.escape(genre.replace('filter-', ''), quote=True)
                                             fh.write(f'\t\t<category lang=\"en\">{genre}</category>\n')
@@ -401,7 +400,7 @@ def mainRun(userdata):
         except Exception as e:
             logger.exception('Exception: printEpisodes')
 
-    def xmltv():            # Routine called after the data has been collected from zap2it website
+    def xmltv():            # Routine called after the data has been collected from gracenote website
         try:
             enc = 'UTF-8'
             outFile = os.path.join(userdata, 'xmltv.xml')
@@ -414,7 +413,7 @@ def mainRun(userdata):
         except Exception as e:
             logger.exception('Exception: xmltv')
 
-    def parseStations(content):     #Routine downloads the necessary files from zap2it website.
+    def parseStations(content):     #Routine downloads the necessary files from gracenote website.
         try:
             ch_guide = json.loads(content)
             for station in ch_guide['channels']:
@@ -741,7 +740,7 @@ def mainRun(userdata):
             return descsort
         except Exception as e:
             logger.exception('Exception: addXdetails to description')
-    
+
     isConnectedtoTVH = tvh_connect(tvhurl, tvhport, usern, passw, digest)
 
     try:
@@ -760,7 +759,7 @@ def mainRun(userdata):
             if not os.path.exists(fileDir):
                 try:
                     logger.info('Downloading guide data for: %s', str(gridtime))
-                    #url = f"https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&pref=-&userId=-"
+                    #url = f"https://tvlistings.gracenote.com/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&lineupId=&timespan=3&headendId={lineupcode}&country={country}&device={device}&postalCode={zipcode}&time={str(gridtime)}&isOverride=true&pref=-&userId=-"
                     options = {'lineupcode': lineupcode, 'country': country, 'device': device, 'zipcode': zipcode, 'gridtime': str(gridtime)}
                     saveContent = fetch_url('lineup', options)
                     #saveContent = urllib.request.urlopen(url).read()
@@ -791,7 +790,7 @@ def mainRun(userdata):
         if xdetails == 'true':
             showList = parseXdetails()
         else:
-            showList = [] 
+            showList = []
         xmltv()
         deleteOldShowCache(showList)
         timeRun = round((time.time() - pythonStartTime),2)
