@@ -1,7 +1,7 @@
 v2.2.1 (2025-07-21)
  - Fixed api call to gracenote missing a few parameters
  - Fixed spelling in genres
- - Fixed whitespace in parts of code for better reading and consistence
+ - Fixed whitespace in parts of code for better reading and consistancy
 
 v2.2.0 (2025-07-14)
  - Updated EPG website to the current website.
