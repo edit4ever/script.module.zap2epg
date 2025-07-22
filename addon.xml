@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.module.zap2epg" name="zap2epg" version="2.2.0" provider-name="edit4ever">
+<addon id="script.module.zap2epg" name="zap2epg" version="2.2.1" provider-name="edit4ever">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.dateutil" version="2.8.2"/>
@@ -28,7 +28,8 @@ Setup:
     <email></email>
     <source></source>
     <news>
-	    v2.2.0 - update for gracenote.  Added separate files for EPG and TVH connections and new logger system (2025-07-14)
+      v2.2.1 - update for gracenote api call.  Fixed spelling errors in genres. (2025-07-21)
+      v2.2.0 - update for gracenote.  Added separate files for EPG and TVH connections and new logger system (2025-07-14)
       v2.0.4 - Update for Kodi 20+.  Updated EPG Genre linking and language detection.
       v2.0.3 - fix channel configuration error (2021-05-23)
       v2.0.2 - fix Tvheadend username and password option (2021-03-29)
