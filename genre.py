@@ -29,10 +29,10 @@ def genreSort(edict, userSelectedGenre, useHex):
         for g in EPgenre:
             if g != "Comedy":
                 genreList.append(g)
-        if not set(['movie', 'Movie','Movies','movies']).isdisjoint(genreList):
+        if not set(['movie','Movie','Movies','movies']).isdisjoint(genreList):
             genreList.insert(0, "Movie / Drama")
         if not set(['News']).isdisjoint(genreList):
-            genreList.insert(0, "News / Current affairs")
+            genreList.insert(0, "News / Current Affairs")
         if not set(['Game show']).isdisjoint(genreList):
             genreList.insert(0, "Game show / Quiz / Contest")
         if not set(['Law']).isdisjoint(genreList):
@@ -41,9 +41,9 @@ def genreSort(edict, userSelectedGenre, useHex):
             genreList.insert(0, "Arts / Culture (without music)")
         if not set(['Entertainment']).isdisjoint(genreList):
             genreList.insert(0, "Popular culture / Traditional Arts")
-        if not set(['Politics', 'Social', 'Public affairs']).isdisjoint(genreList):
+        if not set(['Politics','Social','Public affairs']).isdisjoint(genreList):
             genreList.insert(0, "Social / Political issues / Economics")
-        if not set(['Education', 'Science']).isdisjoint(genreList):
+        if not set(['Education','Science']).isdisjoint(genreList):
             genreList.insert(0, "Education / Science / Factual topics")
         if not set(['How-to']).isdisjoint(genreList):
             genreList.insert(0, "Leisure hobbies")
@@ -94,13 +94,13 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['western','war','military']).isdisjoint(genreList):
                 updatedgenreList.append(["Adventure/Western/War","0x12"][useHex])                                #Adventure/Western/War          0x12
                 genreCount.append("Adventure/Western/War")
-            elif not set(['soap', 'melodrama','folkloric', 'music','musical','musicalcomedy']).isdisjoint(genreList):
+            elif not set(['soap','melodrama','folkloric','music','musical','musicalcomedy']).isdisjoint(genreList):
                 updatedgenreList.append(["Soap/Melodrama/Folkloric","0x15"][useHex])                             #Soap/Melodrama/Folkloric       0x15
                 genreCount.append("Soap/Melodrama/Folkloric")
-            elif not set(['romance', 'romanticcomedy']).isdisjoint(genreList):
+            elif not set(['romance','romanticcomedy']).isdisjoint(genreList):
                 updatedgenreList.append(["Romance","0x16"][useHex])                                              #Romance                        0x16
                 genreCount.append("Romance")
-            elif not set(['seriou','classical', 'religiou', 'historicaldrama', 'biography', 'documentary', 'docudrama']).isdisjoint(genreList):
+            elif not set(['serious','classical','religious','historicaldrama','biography','documentary','docudrama']).isdisjoint(genreList):
                 updatedgenreList.append(["Serious/Classical/Religious/Historical movie/Drama","0x17"][useHex])   #Serious/Classical/Religious/Historical Movie/Drama     0x17
                 genreCount.append("Serious/Classical/Religious/Historical movie/Drama")
             elif not set(['adventure']).isdisjoint(genreList):
@@ -116,7 +116,7 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Adult movie")
 
         #Children Programming
-        elif not set(['children', 'youth']).isdisjoint(genreList):
+        elif not set(['children','youth']).isdisjoint(genreList):
             if edict['eprating'] == 'TV-Y':
                 updatedgenreList.append(["Pre-school children's programs","0x51"][useHex])                       #Pre-school Children's Programmes           0x51
                 genreCount.append("Pre-school children's programs")
@@ -129,7 +129,7 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['informational','educational','science','technology']).isdisjoint(genreList):
                 updatedgenreList.append(["Informational/Educational/School programs","0x54"][useHex])            #Informational/Educational/School Programme 0x54        
                 genreCount.append("Informational/Educational/School programs")
-            elif not set(['anime', 'animated']).isdisjoint(genreList):
+            elif not set(['anime','animated']).isdisjoint(genreList):
                 updatedgenreList.append(["Cartoons/Puppets","0x55"][useHex])                                     #Cartoons/Puppets                           0x55 
                 genreCount.append("Cartoons/Puppets")
             else: 
@@ -137,20 +137,20 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Children's / Youth programs")
 
         #MLeisure/Hobbies
-        elif not set(['advertisement', 'archery', 'auto', 'bodybuilding', 'consumer', 'cooking', 'exercise', 'fishing', 'fitnes', 
-                'fitness&amp;health', 'gardening', 'handicraft', 'health', 'hobbie', 'homeimprovement', 'house/garden', 'how-to', 'hunting', 
-                'motoring', 'outdoor', 'selfimprovement', 'shopping', 'tourism', 'travel']).isdisjoint(genreList):
-            
+        elif not set(['advertisement','archery','auto','bodybuilding','consumer','cooking','exercise','fishing','fitness',
+                'fitness&amp;health','gardening','handicraft','health','hobby','homeimprovement','house/garden','how-to','hunting',
+                'motoring','outdoor','selfimprovement','shopping','tourism','travel']).isdisjoint(genreList):
+
             if not set(['tourism','travel']).isdisjoint(genreList):
                 updatedgenreList.append(["Tourism / Travel","0xA1"][useHex])                                     #Tourism/Travel             0xA1
                 genreCount.append("Tourism / Travel")
             elif not set(['handicraft','homeimprovement','house/garden','how-to']).isdisjoint(genreList):
                 updatedgenreList.append(["Handicraft","0xA2"][useHex])                                           #Handicraft                 0xA2         
                 genreCount.append("Handicraft")
-            elif not set(['motoring', 'auto']).isdisjoint(genreList):
+            elif not set(['motoring','auto']).isdisjoint(genreList):
                 updatedgenreList.append(["Motoring","0xA3"][useHex])                                             #Motoring                   0xA3
                 genreCount.append("Motoring")
-            elif not set(['fitnes','health', 'fitness&amp;health','selfimprovement','bodybuilding','exercise']).isdisjoint(genreList):
+            elif not set(['fitnes','health','fitness&amp;health','selfimprovement','bodybuilding','exercise']).isdisjoint(genreList):
                 updatedgenreList.append(["Fitness and health","0xA4"][useHex])                                   #Fitness & Health           0xA4
                 genreCount.append("Fitness and health")
             elif not set(['cooking']).isdisjoint(genreList):
@@ -167,7 +167,7 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Leisure hobbies")
 
         #News 
-        elif not set(['currentaffair', 'documentary', 'interview', 'new', 'newsmagazine']).isdisjoint(genreList):
+        elif not set(['currentaffair','documentary','interview','news','newsmagazine']).isdisjoint(genreList):
             
             if not set(['weather']).isdisjoint(genreList):
                 updatedgenreList.append(["News/Weather report","0x21"][useHex])                                  #News/Weather Report            0x21
@@ -178,21 +178,21 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['documentary']).isdisjoint(genreList):
                 updatedgenreList.append(["Documentary","0x23"][useHex])                                          #Documentary                    0x23
                 genreCount.append("Documentary")
-            elif not set(['discussion', 'interview', 'debate']).isdisjoint(genreList):
+            elif not set(['discussion','interview','debate']).isdisjoint(genreList):
                 updatedgenreList.append(["Discussion/Interview/Debate","0x24"][useHex])                          #Discussion/Interview/Debate    0x24
                 genreCount.append("Discussion/Interview/Debate")
             else:
-                updatedgenreList.append(["News/Current affairs","0x20"][useHex])                                 #News/Current Affair            0x20
-                genreCount.append("News/Current affairs")
+                updatedgenreList.append(["News/Current Affairs","0x20"][useHex])                                 #News/Current Affair            0x20
+                genreCount.append("News/Current Affairs")
 
         #Sports        
-        elif not set(['actionsport', 'australianrulesfootball', 'autoracing', 'baseball', 'basketball', 'beachvolleyball', 'billiard', 'bmxracing', 
-                'boatracing', 'bobsled', 'bowling', 'boxing', 'bullriding', 'cheerleading', 'cricket', 'cycling', 'diving', 'dragracing', 'equestrian', 
-                'esport', 'fencing', 'fieldhockey', 'figureskating', 'fishing', 'football', 'footvolley', 'golf', 'gymnastic', 'hockey', 'horse', 'horseracing', 
-                'karate', 'lacrosse', 'martialart', 'mixedmartialart', 'motorcycle', 'motorcycleracing', 'motorsport', 'multisportevent', 'olympic', 
-                'paralympic', 'pickleball', 'prowrestling', 'racing', 'rodeo', 'rugby', 'rugbyleague', 'running', 'sailing', 'skating', 'skiing', 
-                'snowboarding', 'soccer', 'softball', 'squash', 'superbowl', 'surfing', 'swimming', 'tabletenni', 'tenni', 'track/field', 'volleyball', 
-                'waterpolo', 'watersport', 'weightlifting', 'wintersport', 'worldcup', 'wrestling']).isdisjoint(genreList):
+        elif not set(['actionsport','australianrulesfootball','autoracing','baseball','basketball','beachvolleyball','billiard','bmxracing',
+                'boatracing','bobsled','bowling','boxing','bullriding','cheerleading','cricket','cycling','diving','dragracing','equestrian',
+                'esport','fencing','fieldhockey','figureskating','fishing','football','footvolley','golf','gymnastic','hockey','horse','horseracing',
+                'karate','lacrosse','martialart','mixedmartialart','motorcycle','motorcycleracing','motorsport','multisportevent','olympic',
+                'paralympic','pickleball','prowrestling','racing','rodeo','rugby','rugbyleague','running','sailing','skating','skiing',
+                'snowboarding','soccer','softball','squash','superbowl','surfing','swimming','tabletennis','tennis','track/field','volleyball',
+                'waterpolo','watersport','weightlifting','wintersport','worldcup','wrestling']).isdisjoint(genreList):
             if not set(['documentary','sportstalk']).isdisjoint(genreList):
                 updatedgenreList.append(["Sports magazines","0x42"][useHex])                                     #Sports magazines                                   0x42
                 genreCount.append("Sports magazines")
@@ -202,10 +202,10 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['football','soccer','australianrulesfootball']).isdisjoint(genreList):
                 updatedgenreList.append(["Football/Soccer","0x43"][useHex])                                      #Football/Soccer                                    0x43
                 genreCount.append("Football/Soccer")
-            elif not set(['tenni','squash']).isdisjoint(genreList):
+            elif not set(['tabletennis','tennis','squash']).isdisjoint(genreList):
                 updatedgenreList.append(["Tennis/Squash","0x44"][useHex])                                        #Tennis/Squash                                      0x44           
                 genreCount.append("Tennis/Squash")
-            elif not set(['basketball', 'hockey','baseball','softball', 'gymnastic','volleyball','track/field','fieldhockey', 
+            elif not set(['basketball','hockey','baseball','softball','gymnastics','volleyball','track/field','fieldhockey',
                     'lacrosse','rugby','cricket','fieldhockey']).isdisjoint(genreList):
                 updatedgenreList.append(["Team sports (excluding football)","0x45"][useHex])                     #Team sports (excluding football)                   0x45
                 genreCount.append("Team sports (excluding football)")
@@ -215,16 +215,16 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['autoracing','dragracing','motorcycle','motorcycleracing','motorsport']).isdisjoint(genreList):
                 updatedgenreList.append(["Motor sport","0x47"][useHex])                                          #Motor sports                                       0x47
                 genreCount.append("Motor sport")
-            elif not set(['bmxracing', 'boatracing', 'diving', 'fishing', 'sailing', 'surfing', 'swimming', 'waterpolo', 'watersport']).isdisjoint(genreList):
+            elif not set(['bmxracing','boatracing','diving','fishing','sailing','surfing','swimming','waterpolo','watersport']).isdisjoint(genreList):
                 updatedgenreList.append(["Water sport","0x48"][useHex])                                          #Water sport                                        0x48
                 genreCount.append("Water sport")
-            elif not set(['wintersport', 'skiing', 'bobsled', 'figureskating', 'skating','snowboarding']).isdisjoint(genreList):
+            elif not set(['wintersport','skiing','bobsled','figureskating','skating','snowboarding']).isdisjoint(genreList):
                 updatedgenreList.append(["Winter sports","0x49"][useHex])                                        #Winter sports                                      0x49
                 genreCount.append("Winter sports")
-            elif not set(['horse', 'equestrian', 'horseracing','rodeo','bullriding']).isdisjoint(genreList):
+            elif not set(['horse','equestrian','horseracing','rodeo','bullriding']).isdisjoint(genreList):
                 updatedgenreList.append(["Equestrian","0x4A"][useHex])                                           #Equestrian                                         0x4A
                 genreCount.append("Equestrian")
-            elif not set(['martialart', 'mixedmartialart','karate']).isdisjoint(genreList):
+            elif not set(['martialart','mixedmartialart','karate']).isdisjoint(genreList):
                 updatedgenreList.append(["Martial sports","0x4B"][useHex])                                       #Martial sports                                     0x4B
                 genreCount.append("Martial sports")
             else:
@@ -232,15 +232,15 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Sports")
 
         #Show
-        elif not set(['competition', 'competitionreality', 'contest', 'gameshow', 'quiz', 'reality', 'talk', 'talkshow', 'variety', 
+        elif not set(['competition','competitionreality','contest','gameshow','quiz','reality','talk','talkshow','variety',
                 'varietyshow']).isdisjoint(genreList):
             if not set(['gameshow','quiz','contest']).isdisjoint(genreList):
                 updatedgenreList.append(["Game show/Quiz/Contest","0x31"][useHex])                               #Game show/Quiz/Contest             0x31
                 genreCount.append("Game show/Quiz/Contest")
-            elif not set(['variety','varietyshow', 'competition', 'competitionreality', 'reality']).isdisjoint(genreList):
+            elif not set(['variety','varietyshow','competition','competitionreality','reality']).isdisjoint(genreList):
                 updatedgenreList.append(["Variety show","0x32"][useHex])                                         #Variety Show                       0x32              
                 genreCount.append("Variety show")
-            elif not set(['talk', 'talkshow']).isdisjoint(genreList):
+            elif not set(['talk','talkshow']).isdisjoint(genreList):
                 updatedgenreList.append(["Talk show","0x33"][useHex])                                            #Talk Show                          0x33
                 genreCount.append("Talk show")
             else:
@@ -248,11 +248,11 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Show / Game show")
 
         #Music/Ballet/Dance
-        elif not set(['ballet', 'classicalmusic', 'dance', 'folk', 'jazz', 'music', 'musical', 'opera', 'pop', 'rock', 'traditionalmusic']).isdisjoint(genreList):
+        elif not set(['ballet','classicalmusic','dance','folk','jazz','music','musical','opera','pop','rock','traditionalmusic']).isdisjoint(genreList):
             if not set(['rock','pop']).isdisjoint(genreList):
                 updatedgenreList.append(["Rock/Pop","0x61"][useHex])                                             #Rock/Pop                           0x61
                 genreCount.append("Rock/Pop")
-            elif not set(['seriou','classicalmusic']).isdisjoint(genreList):
+            elif not set(['serious','classicalmusic']).isdisjoint(genreList):
                 updatedgenreList.append(["Serious music/Classical music","0x62"][useHex])                        #Seriouis/Classical Music           0x62      
                 genreCount.append("Serious music/Classical music")
             elif not set(['folk','traditionalmusic']).isdisjoint(genreList):
@@ -272,8 +272,8 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Music / Ballet / Dance")
 
         #Arts/Culture
-        elif not set(['art', 'arts/craft', 'artsmagazine', 'broadcasting', 'cinema', 'culture', 'culturemagazine', 'experimentalfilm', 'fashion', 'film', 
-            'fineart', 'literature', 'newmedia', 'performingart', 'popularculture', 'pres', 'religion', 'religiou', 'traditionalart', 'video']).isdisjoint(genreList):
+        elif not set(['art','arts/craft','artsmagazine','broadcasting','cinema','culture','culturemagazine','experimentalfilm','fashion','film',
+            'fineart','literature','newmedia','performingart','popularculture','pres','religion','religious','traditionalart','video']).isdisjoint(genreList):
 
             if not set(['performingart']).isdisjoint(genreList):
                 updatedgenreList.append(["Performing arts","0x71"][useHex])                                      #Performing Arts                    0x71
@@ -281,7 +281,7 @@ def genreSort(edict, userSelectedGenre, useHex):
             elif not set(['fineart']).isdisjoint(genreList):
                 updatedgenreList.append(["Fine arts","0x72"][useHex])                                            #Fine Arts                          0x72            
                 genreCount.append("Fine arts")
-            elif not set(['religion','religiou']).isdisjoint(genreList):
+            elif not set(['religion','religious']).isdisjoint(genreList):
                 updatedgenreList.append(["Religion","0x73"][useHex])                                             #Religion                           0x73
                 genreCount.append("Religion")
             elif not set(['popculture','traditionalart']).isdisjoint(genreList):
@@ -313,8 +313,8 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Arts / Culture (without music)")
 
         #Social/Politics/Economics
-        elif not set(['community', 'documentary', 'economic', 'magazine', 'politic', 'political', 'publicaffair', 
-                'remarkablepeople', 'report', 'social', 'socialadvisory']).isdisjoint(genreList):
+        elif not set(['community','documentary','economic','magazine','politic','political','publicaffair',
+                'remarkablepeople','report','social','socialadvisory']).isdisjoint(genreList):
 
             if not set(['magazine','report','documentary']).isdisjoint(genreList):
                 updatedgenreList.append(["Magazines/Reports/Documentary","0x81"][useHex])                        #Magazines/Reports/Documentary      0x81
@@ -330,9 +330,9 @@ def genreSort(edict, userSelectedGenre, useHex):
                 genreCount.append("Social/Political issues/Economics")
 
         #MEducational/Science
-        elif not set(['adulteducation', 'animal', 'dogshow', 'education', 'educational', 'environment', 'expedition', 'factual', 'foreigncountrie', 
-                'furthereducation', 'health', 'language', 'medical', 'medicine', 'naturalscience', 'nature', 'outdoor', 'physiology', 'psychology', 
-                'science', 'social', 'spiritualscience', 'technology']).isdisjoint(genreList):
+        elif not set(['adulteducation','animal','dogshow','education','educational','environment','expedition','factual','foreigncountrie',
+                'furthereducation','health','language','medical','medicine','naturalscience','nature','outdoor','physiology','psychology',
+                'science','social','spiritualscience','technology']).isdisjoint(genreList):
             
             if not set(['nature','animal','environment','outdoor','dogshow']).isdisjoint(genreList):
                 updatedgenreList.append(["Nature/Animals/Environment","0x91"][useHex])                           #Nature/Animals/Environment         0x91          
@@ -364,11 +364,11 @@ def genreSort(edict, userSelectedGenre, useHex):
         # instead of the string to be recoginzed correctly.  When TVH is modified to accept a hex value for the genre we can then
         # use these codes to get correct EPG colored grids.  One color for movies with it's separate color and one for TV shows.
 
-        elif not set(['crime', 'crimedrama', 'detective', 'mystery', 'thriller']).isdisjoint(genreList):
+        elif not set(['crime','crimedrama','detective','mystery','thriller']).isdisjoint(genreList):
                 updatedgenreList.append(["Detective/Thriller","0xF1"][useHex])                                   #Detective/Thriller                 0xF1
                 genreCount.append("Detective/Thriller")
 
-        elif not set(['fantasy', 'horror', 'paranormal', 'sciencefiction']).isdisjoint(genreList):
+        elif not set(['fantasy','horror','paranormal','sciencefiction']).isdisjoint(genreList):
                 updatedgenreList.append(["Science fiction/Fantasy/Horror","0xF3"][useHex])                       #Science Fiction/Fantasy/Horror     0xF3
                 genreCount.append("Science fiction/Fantasy/Horror")
 
@@ -376,11 +376,11 @@ def genreSort(edict, userSelectedGenre, useHex):
                 updatedgenreList.append(["Adventure/Western/War","0xF2"][useHex])                                #Adventure/Western/War              0xF2
                 genreCount.append("Adventure/Western/War")
 
-        elif not set(['comedy', 'comedydrama', 'darkcomedy', 'sitcom']).isdisjoint(genreList):
+        elif not set(['comedy','comedydrama','darkcomedy','sitcom']).isdisjoint(genreList):
                 updatedgenreList.append(["Comedy","0xF4"][useHex])                                               #Comedy                             0xF4
                 genreCount.append("Comedy")
 
-        elif not set(['folk', 'folkloric', 'melodrama', 'music', 'musical', 'musicalcomedy', 'soap']).isdisjoint(genreList):
+        elif not set(['folk','folkloric','melodrama','music','musical','musicalcomedy','soap']).isdisjoint(genreList):
                 updatedgenreList.append(["Soap/Melodrama/Folkloric","0xF5"][useHex])                             #Soap/Melodrama/Folkloric           0xF5
                 genreCount.append("Soap/Melodrama/Folkloric")
 
@@ -388,7 +388,7 @@ def genreSort(edict, userSelectedGenre, useHex):
                 updatedgenreList.append(["Romance","0xF6"][useHex])                                              #Romance                            0xF6
                 genreCount.append("Romance")
 
-        elif not set(['biography', 'classical', 'classicalreligion', 'docudrama', 'historical', 'historicaldrama', 'religion', 'seriou']).isdisjoint(genreList):
+        elif not set(['biography','classical','classicalreligion','docudrama','historical','historicaldrama','religion','serious']).isdisjoint(genreList):
                 updatedgenreList.append(["Serious/Classical/Religious/Historical movie/Drama","0xF7"][useHex])  #Serious/Classical/Religion/Historical  0xF7
                 genreCount.append("Serious/Classical/Religious/Historical movie/Drama")
 
