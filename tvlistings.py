@@ -40,7 +40,7 @@ def fetch_url(string, options):
     if string == 'postal':      #default.py line 201
         substring = f"/gapzap_webapi/api/Providers/getPostalCodeProviders/{options['country']}/{options['zipcodeNew']}/gapzap/en"
     if string == 'lineup':      #default.py line 113, zap2epg.py line 768
-        substring = f"/api/grid?lineupId=&timespan=3&headendId={options['lineupcode']}&country={options['country']}&device={options['device']}&postalCode={options['zipcode']}&time={options['gridtime']}&pref=-&userId=-"
+        substring = f"/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&lineupId=&timespan=3&headendId={options['lineupcode']}&country={options['country']}&device={options['device']}&postalCode={options['zipcode']}&time={options['gridtime']}&isOverride=true&pref=-&userId=-"
     if string == 'programDetails':  #zap2epg line 566
         substring =  '/api/program/overviewDetails'
         data = options['data_encode']
