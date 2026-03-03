@@ -342,16 +342,16 @@ def mainRun(userdata):
                                 if not episode.startswith("MV"):
                                     if epicon == '1':
                                         if edict['epimage'] is not None and edict['epimage'] != '':
-                                            fh.write(f'\t\t<icon src="https://dshm.tmsimg.com/assets/{edict["epimage"]}.jpg" />\n')
+                                            fh.write(f'\t\t<icon src="https://tmsimg.fancybits.co/assets/{edict["epimage"]}.jpg" />\n')
                                         else:
                                             if edict['epthumb'] is not None and edict['epthumb'] != '':
-                                                fh.write(f'\t\t<icon src="https://dshm.tmsimg.com/assets/{edict["epthumb"]}.jpg" />\n')
+                                                fh.write(f'\t\t<icon src="https://tmsimg.fancybits.co/assets/{edict["epthumb"]}.jpg" />\n')
                                     if epicon == '2':
                                         if edict['epthumb'] is not None and edict['epthumb'] != '':
-                                            fh.write(f'\t\t<icon src="https://dshm.tmsimg.com/assets/{edict["epthumb"]}.jpg" />\n')
+                                            fh.write(f'\t\t<icon src="https://tmsimg.fancybits.co/assets/{edict["epthumb"]}.jpg" />\n')
                                 if episode.startswith("MV"):
                                     if edict['epthumb'] is not None and edict['epthumb'] != '':
-                                        fh.write(f'\t\t<icon src="https://dshm.tmsimg.com/assets/{edict["epthumb"]}.jpg" />\n')
+                                        fh.write(f'\t\t<icon src="https://tmsimg.fancybits.co/assets/{edict["epthumb"]}.jpg" />\n')
                                 if not any(i in ['New', 'Live'] for i in edict['epflag']):
                                     fh.write("\t\t<previously-shown ")
                                     if edict['epoad'] is not None and int(edict['epoad']) > 0:
